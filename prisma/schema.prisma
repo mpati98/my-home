@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Task {
+  id        String      @id @default(cuid())
+  title     String
+  tag       TaskTag
+  priority  Priority
+  done      Boolean     @default(false)
+  dueDate   DateTime
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+enum TaskTag {
+  Design
+  Dev
+  Docs
+  Content
+  Management
+}
+
+enum Priority {
+  High
+  Medium
+  Low
+}
+
+model Card {
+  id          String       @id @default(cuid())
+  title       String
+  subtitle    String?
+  category    CardCategory
+  content     String
+  tags        String[]
+  spineColor  String       @default("#c9a96e")
+  isFavorite  Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum CardCategory {
+  Book
+  Experience
+  Collection
+}
