@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { CardCategory } from "@prisma/client";
 
 // PATCH /api/cards/[id]
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const card = await prisma.card.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(body.title      !== undefined ? { title: body.title }                       : {}),
         ...(body.subtitle   !== undefined ? { subtitle: body.subtitle }                 : {}),
@@ -30,9 +31,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 // DELETE /api/cards/[id]
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await prisma.card.delete({ where: { id: params.id } });
+    const { id } = await params;
+    await prisma.card.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to delete card" }, { status: 500 });

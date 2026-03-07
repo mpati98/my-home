@@ -412,3 +412,23 @@ export default function WorkspacePage({
     </>
   );
 }
+
+export async function getServerSideProps() {
+  const { prisma } = await import("@/lib/prisma");
+  const tasks = await prisma.task.findMany({
+    orderBy: { dueDate: "asc" },
+  });
+
+  const serialized = tasks.map((t) => ({
+    ...t,
+    dueDate: t.dueDate.toISOString(),
+    createdAt: t.createdAt.toISOString(),
+    updatedAt: t.updatedAt.toISOString(),
+  }));
+
+  return {
+    props: {
+      initialTasks: serialized,
+    },
+  };
+}

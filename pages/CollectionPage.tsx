@@ -535,3 +535,18 @@ export default function CollectionPage({
     </>
   );
 }
+
+export async function getServerSideProps() {
+  const { prisma } = await import("@/lib/prisma");
+  const cards = await prisma.card.findMany({ orderBy: { createdAt: "desc" } });
+  const serialized = cards.map((c) => ({
+    ...c,
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.updatedAt.toISOString(),
+  }));
+  return {
+    props: {
+      initialCards: serialized,
+    },
+  };
+}
