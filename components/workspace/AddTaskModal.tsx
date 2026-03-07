@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Task } from "@/utilities/workspace/theme";
-import { mono } from "@/utilities/workspace/theme";
+import { mono } from "@/utilities/workspace/utility";
 
 const AddTaskModal = ({
   onClose,
