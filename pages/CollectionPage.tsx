@@ -1,7 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import FlipCard from "@/components/collection/FlipCard";
-import AddCardModal from "@/components/collection/AddCardModal";
 import type { Card, CardCategory } from "@/utilities/collection/theme";
 import {
   monthKey,
@@ -10,7 +9,11 @@ import {
   serif,
 } from "@/utilities/collection/utility";
 import { SEPIA, INK, CREAM, CAT_ICON } from "@/utilities/collection/theme";
-import { EditCardModal, DeleteModal } from "@/utilities/collection/modal";
+import {
+  EditCardModal,
+  DeleteModal,
+  AddCardModal,
+} from "@/utilities/collection/modal";
 
 // ── Main Library Page ─────────────────────────────────
 export default function CollectionPage({
