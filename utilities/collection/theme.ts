@@ -52,3 +52,7 @@ export const SPINE_PRESETS = [
   "#6d6875",
 ];
 
+
+// ── Shared input style ────────────────────────────────
+export const INP = "w-full bg-[#1e2128] border border-[#1e2128] rounded-sm px-3 py-2.5 text-[#e8e3d5] outline-none font-[Cormorant_Garant,serif] text-[15px] focus:border-[#a3c47a] transition-colors";
+export const INP_MONO = "w-full bg-[#1e2128] border border-[#1e2128] rounded-sm px-3 py-2.5 text-[#e8e3d5] outline-none font-[Courier_Prime,monospace] text-xs focus:border-[#a3c47a] transition-colors";

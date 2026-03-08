@@ -13,6 +13,7 @@ model Task {
   tag       TaskTag
   priority  Priority
   done      Boolean     @default(false)
+  doneAt    DateTime?
   dueDate   DateTime
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt

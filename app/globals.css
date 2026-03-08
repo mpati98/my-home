@@ -1,142 +1,55 @@
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Montserrat:wght@400;700&display=swap");
-/* @tailwind utilities; */
 @import "tailwindcss";
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Playfair+Display:wght@700&family=Cormorant+Garant:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap");
+
 * {
   box-sizing: border-box;
-}
-html {
-  font-family: "Quicksand", sans-serif;
-}
-
-body {
   margin: 0;
-  background: radial-gradient(#282c34, #282c34);
+  /* padding: 0; */
 }
 
-.react-calendar {
-  width: 100% !important;
-  border: none !important;
-  font-family: "Courier New", Courier, monospace;
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2d35;
+  border-radius: 10px;
 }
 
-.not-found,
-.error {
-  margin-top: 5rem;
-  text-align: center;
+::placeholder {
+  color: #4b5563;
 }
 
-.not-found h1,
-.error h1 {
-  font-size: 5rem;
-  margin: 0px;
-  font-weight: 900;
-  color: #262626;
-  text-transform: uppercase;
-  background: linear-gradient(90deg, #f9572a, #ffc905);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-size: cover;
-  background-position: center;
-  font-family: "Montserrat", sans-serif;
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.4);
+  cursor: pointer;
 }
 
-.not-found p,
-.error p {
-  font-size: 1.5rem;
-  font-weight: 500;
-  color: #ddd8d8;
+select option {
+  background: #1a1d24;
+  color: #e8e3d5;
 }
 
 @layer utilities {
-  .perspective-1000 {
-    perspective: 1000px;
+  .perspective-1200 {
+    perspective: 1200px;
   }
-  .transform-style-3d {
+  .preserve-3d {
     transform-style: preserve-3d;
   }
   .backface-hidden {
     backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
   .rotate-y-180 {
     transform: rotateY(180deg);
   }
-
-  /* Ẩn thanh cuộn cho đẹp */
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  .writing-vertical {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
   }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-}
-
-.rbc-btn-group:first-child {
-  display: none !important;
-}
-
-.rbc-toolbar-label {
-  text-align: right !important;
-  padding: 0px 20px !important;
-}
-
-.rbc-btn-group:last-child {
-  font-size: 13px !important;
-}
-
-.rbc-btn-group:last-child button {
-  border: none !important;
-  background-color: #f1f0ff !important;
-  margin-left: 2px !important;
-}
-
-.rbc-toolbar button.rbc-active {
-  background-color: #dbdafe !important;
-  box-shadow: none !important;
-}
-
-.rbc-time-view {
-  border-color: #eee !important;
-}
-
-.rbc-time-header {
-  display: none !important;
-}
-
-.rbc-time-content {
-  border: none !important;
-}
-
-.rbc-event {
-  border: none !important;
-  color: black !important;
-  padding: 10px !important;
-  margin: 10px !important;
-  width: 99% !important;
-}
-
-.rbc-event:nth-child(1) {
-  background-color: #ffc905 !important;
-}
-
-.rbc-event:nth-child(2) {
-  background-color: green !important;
-}
-
-.rbc-event:nth-child(3) {
-  background-color: blueviolet !important;
-}
-
-.rbc-event:nth-child(4) {
-  background-color: blue !important;
-}
-
-.rbc-event:nth-child(6) {
-  background-color: purple !important;
-}
-
-.rbc-event-label {
-  color: gray !important;
-  margin-bottom: 5px !important;
 }

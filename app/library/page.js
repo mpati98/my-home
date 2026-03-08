@@ -1,14 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import CollectionPage from "@/pages/CollectionPage";
+import LibraryPage from "@/pages/LibraryPage";
 
 export const dynamic = "force-dynamic";
 
 export default async function Collection() {
   const cards = await prisma.card.findMany({ orderBy: { createdAt: "desc" } });
-  const serialized = cards.map((c) => ({
+  const serialized = (cards || []).map((c) => ({
     ...c,
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
   }));
-  return <CollectionPage initialCards={serialized} />;
+  return <LibraryPage initialCards={serialized} />;
 }

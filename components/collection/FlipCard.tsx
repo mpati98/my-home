@@ -1,18 +1,12 @@
 "use client";
+
+import { CAT_ICON, GOLD, SEPIA, INK, RED } from "@/utilities/collection/theme";
+import { fmtMonth } from "@/utilities/collection/utility";
+import { Card } from "@/utilities/collection/theme";
 import { useState } from "react";
-import type { Card } from "@/utilities/collection/theme";
-import {
-  CREAM,
-  CAT_ICON,
-  CAT_LABEL,
-  GOLD,
-  INK,
-  SEPIA,
-  RED,
-} from "@/utilities/collection/theme";
-import { serif, mono, fmtMonth } from "@/utilities/collection/utility";
-import DateEditor from "./DateEditor";
-// ── Flip Card ────────────────────────────────────────
+import { DateEditor } from "./DateEditor";
+
+// ── Flip Card ─────────────────────────────────────────
 export default function FlipCard({
   card,
   onFav,
@@ -28,7 +22,6 @@ export default function FlipCard({
 }) {
   const [flipped, setFlipped] = useState(false);
   const [hovered, setHovered] = useState(false);
-
   const lines = card.content.split("\n").filter(Boolean);
 
   return (
@@ -36,276 +29,126 @@ export default function FlipCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => setFlipped((f) => !f)}
-      style={{
-        perspective: 1200,
-        cursor: "pointer",
-        height: 300,
-        position: "relative",
-      }}
+      className="perspective-1200 cursor-pointer h-75 relative"
     >
       <div
+        className="relative w-full h-full preserve-3d transition-transform duration-500"
         style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          transformStyle: "preserve-3d",
           transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-          transition: "transform 0.55s cubic-bezier(.23,1,.32,1)",
+          transitionTimingFunction: "cubic-bezier(.23,1,.32,1)",
         }}
       >
-        {/* ── FRONT ── */}
+        {/* FRONT */}
         <div
+          className="absolute inset-0 backface-hidden flex rounded-sm overflow-hidden transition-all duration-300"
           style={{
-            position: "absolute",
-            inset: 0,
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            display: "flex",
-            borderRadius: 4,
-            overflow: "hidden",
             boxShadow: hovered
               ? "4px 6px 24px rgba(26,22,18,0.22), 0 0 0 1px rgba(26,22,18,0.08)"
               : "2px 4px 12px rgba(26,22,18,0.12), 0 0 0 1px rgba(26,22,18,0.06)",
             transform: hovered ? "translateY(-3px)" : "translateY(0)",
-            transition: "box-shadow 0.25s ease, transform 0.25s ease",
           }}
         >
           {/* Spine */}
           <div
-            style={{
-              width: 14,
-              flexShrink: 0,
-              background: card.spineColor,
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "center",
-              paddingBottom: 10,
-            }}
+            className="w-3.5 shrink-0 flex items-end justify-center pb-2.5"
+            style={{ background: card.spineColor }}
           >
-            <span
-              style={{
-                writingMode: "vertical-rl",
-                transform: "rotate(180deg)",
-                fontSize: 8,
-                color: "rgba(255,255,255,0.5)",
-                fontFamily: "'Courier Prime', monospace",
-                letterSpacing: 2,
-              }}
-            >
+            <span className="writing-vertical text-[8px] text-white/50 font-[Courier_Prime,monospace] tracking-widest">
               {card.category.toUpperCase()}
             </span>
           </div>
-
           {/* Body */}
-          <div
-            style={{
-              flex: 1,
-              background: CREAM,
-              padding: "18px 18px 14px",
-              display: "flex",
-              flexDirection: "column",
-              position: "relative",
-            }}
-          >
-            {/* Top row */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                marginBottom: 12,
-              }}
-            >
+          <div className="flex-1 bg-[#16181d] px-4 pt-4 pb-3 flex flex-col relative">
+            <div className="flex justify-between items-start mb-3">
               <span
-                style={{
-                  fontSize: 11,
-                  color: card.spineColor,
-                  fontFamily: "'Courier Prime', monospace",
-                  letterSpacing: 2,
-                  textTransform: "uppercase",
-                }}
+                className="font-[Courier_Prime,monospace] text-[11px] tracking-widest uppercase"
+                style={{ color: card.spineColor }}
               >
-                {CAT_ICON[card.category]} {CAT_LABEL[card.category]}
+                {CAT_ICON[card.category]} {card.category}
               </span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onFav(card.id, !card.isFavorite);
                 }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 16,
-                  color: card.isFavorite ? GOLD : "#ccc2b4",
-                  padding: 0,
-                  lineHeight: 1,
-                }}
+                className="bg-transparent border-none cursor-pointer text-base p-0 leading-none"
+                style={{ color: card.isFavorite ? GOLD : "#4b5563" }}
               >
                 {card.isFavorite ? "★" : "☆"}
               </button>
             </div>
-
-            {/* Title + subtitle */}
-            <div style={{ flex: 1 }}>
-              <h3
-                style={serif(19, INK, 700, {
-                  lineHeight: 1.2,
-                  marginBottom: 5,
-                })}
-              >
+            <div className="flex-1">
+              <h3 className="font-[Cormorant_Garant,serif] text-[19px] font-bold text-[#e8e3d5] leading-tight mb-1">
                 {card.title}
               </h3>
               {card.subtitle && (
-                <p
-                  style={mono(12, SEPIA, {
-                    marginBottom: 10,
-                    fontStyle: "italic",
-                  })}
-                >
+                <p className="font-[Courier_Prime,monospace] text-xs text-[#4b5563] italic mb-2">
                   {card.subtitle}
                 </p>
               )}
             </div>
-
-            {/* Date stamp */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                marginBottom: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 3,
-                  height: 3,
-                  borderRadius: "50%",
-                  background: "#c9bfb0",
-                  flexShrink: 0,
-                }}
-              />
-              <span style={mono(10, "#b0a090")}>
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="w-1 h-1 rounded-full bg-[#4b5563]" />
+              <span className="font-[Courier_Prime,monospace] text-[10px] text-[#4b5563]">
                 {fmtMonth(card.createdAt)}
               </span>
             </div>
-
-            {/* Tags */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            <div className="flex flex-wrap gap-1">
               {card.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  style={{
-                    fontSize: 10,
-                    padding: "2px 7px",
-                    borderRadius: 2,
-                    border: "1px solid #ddd4c4",
-                    color: SEPIA,
-                    fontFamily: "'Courier Prime', monospace",
-                    background: "transparent",
-                  }}
+                  className="font-[Courier_Prime,monospace] text-[10px] px-1.5 py-0.5 border border-[#1e2128] text-[#4b5563] rounded-sm"
                 >
                   {tag}
                 </span>
               ))}
             </div>
-
-            <div
-              style={{
-                position: "absolute",
-                bottom: 8,
-                right: 12,
-                ...mono(9, "#ccc2b4"),
-              }}
-            >
+            <div className="absolute bottom-2 right-3 font-[Courier_Prime,monospace] text-[9px] text-[#4b5563]">
               tap to read →
             </div>
-
-            {/* Ruled lines */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 14,
-                right: 0,
-                height: 30,
-                pointerEvents: "none",
-              }}
-            >
-              {[0, 1].map((i) => (
-                <div
-                  key={i}
-                  style={{ height: 1, background: "#e8dfd3", marginBottom: 14 }}
-                />
-              ))}
+            <div className="absolute bottom-0 left-3.5 right-0 h-7 pointer-events-none">
+              <div className="h-px bg-[#1e2128] mb-3.5" />
+              <div className="h-px bg-[#1e2128]" />
             </div>
           </div>
         </div>
 
-        {/* ── BACK ── */}
+        {/* BACK */}
         <div
+          className="absolute inset-0 backface-hidden bg-[#16181d] rounded-sm overflow-hidden flex flex-col"
           style={{
-            position: "absolute",
-            inset: 0,
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
-            background: CREAM,
-            borderRadius: 4,
-            overflow: "hidden",
             boxShadow:
               "2px 4px 12px rgba(26,22,18,0.12), 0 0 0 1px rgba(26,22,18,0.06)",
-            display: "flex",
-            flexDirection: "column",
           }}
         >
           <div
-            style={{ height: 5, background: card.spineColor, flexShrink: 0 }}
+            className="h-1.5 shrink-0"
+            style={{ background: card.spineColor }}
           />
-
-          {/* Notes body */}
-          <div style={{ flex: 1, padding: "14px 16px", overflowY: "auto" }}>
+          <div className="flex-1 px-4 py-3.5 overflow-y-auto">
             <div
-              style={mono(10, card.spineColor, {
-                letterSpacing: 2,
-                marginBottom: 12,
-              })}
+              className="font-[Courier_Prime,monospace] text-[10px] tracking-widest mb-3"
+              style={{ color: card.spineColor }}
             >
               {CAT_ICON[card.category]} NOTES
             </div>
             {lines.map((line, i) => (
               <p
                 key={i}
-                style={serif(13.5, line.startsWith("'") ? SEPIA : INK, 400, {
-                  lineHeight: 1.65,
-                  marginBottom: 8,
+                className="font-[Cormorant_Garant,serif] text-sm leading-relaxed mb-2"
+                style={{
+                  color: line.startsWith("'") ? SEPIA : INK,
                   fontStyle: line.startsWith("'") ? "italic" : "normal",
-                })}
+                }}
               >
                 {line}
               </p>
             ))}
           </div>
-
-          {/* Back footer */}
-          <div
-            style={{
-              padding: "10px 16px 14px",
-              borderTop: "1px solid #e8dfd3",
-              flexShrink: 0,
-            }}
-          >
-            {/* Editable date */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 10,
-              }}
-            >
-              <span style={mono(9, "#c9bfb0", { letterSpacing: 1 })}>
+          <div className="px-4 pb-3.5 border-t border-[#1e2128] shrink-0">
+            <div className="flex justify-between items-center mb-2.5 pt-2">
+              <span className="font-[Courier_Prime,monospace] text-[9px] text-[#4b5563] tracking-widest">
                 RECORDED
               </span>
               <DateEditor
@@ -314,93 +157,32 @@ export default function FlipCard({
                 onUpdate={onDateUpdate}
               />
             </div>
-
-            {/* Tags row */}
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 4,
-                marginBottom: 12,
-              }}
-            >
+            <div className="flex flex-wrap gap-1 mb-3">
               {card.tags.map((tag) => (
                 <span
                   key={tag}
-                  style={{
-                    fontSize: 9,
-                    padding: "1px 7px",
-                    border: "1px solid #ddd4c4",
-                    color: SEPIA,
-                    fontFamily: "'Courier Prime', monospace",
-                    borderRadius: 2,
-                  }}
+                  className="font-[Courier_Prime,monospace] text-[9px] px-1.5 py-0.5 border border-[#1e2128] text-[#4b5563] rounded-sm"
                 >
                   {tag}
                 </span>
               ))}
             </div>
-
-            {/* Edit + Delete action row */}
             <div
-              style={{ display: "flex", gap: 8 }}
+              className="grid grid-cols-2 gap-2"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => onEdit(card)}
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                  padding: "7px 0",
-                  borderRadius: 3,
-                  border: "1px solid #ddd4c4",
-                  background: "transparent",
-                  color: SEPIA,
-                  cursor: "pointer",
-                  fontFamily: "'Courier Prime', monospace",
-                  fontSize: 11,
-                  transition: "background 0.15s, border-color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#f0ebe0";
-                  e.currentTarget.style.borderColor = "#c9bfb0";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.borderColor = "#ddd4c4";
-                }}
+                className="flex items-center justify-center gap-1.5 py-1.5 rounded-sm border border-[#1e2128] bg-transparent text-[#4b5563] cursor-pointer font-[Courier_Prime,monospace] text-[11px] hover:bg-[#1e2128] hover:border-[#4b5563] transition-all"
               >
-                <span style={{ fontSize: 12 }}>✏︎</span> Edit
+                <span>✏︎</span> Edit
               </button>
               <button
                 onClick={() => onDelete(card)}
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                  padding: "7px 0",
-                  borderRadius: 3,
-                  border: "1px solid #f5c6c0",
-                  background: "transparent",
-                  color: RED,
-                  cursor: "pointer",
-                  fontFamily: "'Courier Prime', monospace",
-                  fontSize: 11,
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#fdf0ee";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
+                className="flex items-center justify-center gap-1.5 py-1.5 rounded-sm border border-[#f5c6c0] bg-transparent cursor-pointer font-[Courier_Prime,monospace] text-[11px] hover:bg-[#1e2128] transition-all"
+                style={{ color: RED }}
               >
-                <span style={{ fontSize: 12 }}>✕</span> Delete
+                <span>✕</span> Delete
               </button>
             </div>
           </div>

@@ -1,11 +1,76 @@
+"use client";
+
 import { useState } from "react";
+import {
+  Card,
+  CardCategory,
+  CardFormData,
+  CAT_ICON,
+  CREAM,
+  INK,
+  INP,
+  INP_MONO,
+  RED,
+  SEPIA,
+  SPINE_PRESETS,
+} from "./theme";
+import { Label, toInputDate } from "./utility";
 
-import { INK, SEPIA, CREAM, CAT_ICON, SPINE_PRESETS, RED } from "./theme";
-import { mono, serif, Label, toInputDate, inp, inpMono } from "./utility";
-import type { CardFormData, CardCategory, Card } from "./theme";
+// ── DeleteModal ───────────────────────────────────────
+export function DeleteModal({
+  card,
+  onConfirm,
+  onCancel,
+}: {
+  card: Card;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 bg-[#1a1612]/60 z-60 flex items-center justify-center p-5"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-[#16181d] rounded-sm p-7 w-full max-w-sm border border-[#1e2128] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="h-1 rounded-sm mb-6"
+          style={{ background: card.spineColor }}
+        />
+        <h3 className="font-[Cormorant_Garant,serif] text-[22px] font-bold text-[#e8e3d5] mb-2">
+          Remove this card?
+        </h3>
+        <p className="font-[Cormorant_Garant,serif] text-[15px] font-semibold text-[#e8e3d5] mb-1">
+          {card.title}
+        </p>
+        <p className="font-[Courier_Prime,monospace] text-[11px] text-[#4b5563] mb-6 leading-relaxed">
+          This will permanently delete the card and all its notes. This cannot
+          be undone.
+        </p>
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            onClick={onCancel}
+            className="py-2.5 rounded-sm border border-[#1e2128] bg-transparent text-[#4b5563] cursor-pointer font-[Courier_Prime,monospace] text-xs hover:bg-[#1e2128] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="py-2.5 rounded-sm border-none cursor-pointer font-[Cormorant_Garant,serif] text-[15px] font-semibold text-white hover:opacity-90 transition-opacity"
+            style={{ background: RED }}
+          >
+            Delete card
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-// ── CategoryPicker ───────────────────────────────────
-function CategoryPicker({
+// ── Category & Color pickers ──────────────────────────
+export function CategoryPicker({
   value,
   onChange,
 }: {
@@ -13,21 +78,16 @@ function CategoryPicker({
   onChange: (c: CardCategory) => void;
 }) {
   return (
-    <div style={{ display: "flex", gap: 8 }}>
+    <div className="grid grid-cols-3 gap-2">
       {(["Book", "Experience", "Collection"] as CardCategory[]).map((cat) => (
         <button
           key={cat}
           onClick={() => onChange(cat)}
+          className="py-2 px-1 rounded-sm cursor-pointer font-[Courier_Prime,monospace] text-[11px] transition-all"
           style={{
-            flex: 1,
-            padding: "8px 4px",
-            borderRadius: 3,
-            cursor: "pointer",
-            border: value === cat ? "1.5px solid " + INK : "1px solid #ddd4c4",
+            border: value === cat ? "1.5px solid " + INK : "1px solid #1e2128",
             background: value === cat ? INK : "transparent",
-            color: value === cat ? CREAM : SEPIA,
-            fontFamily: "'Courier Prime', monospace",
-            fontSize: 11,
+            color: value === cat ? CREAM : "#4b5563",
           }}
         >
           {CAT_ICON[cat]} {cat}
@@ -36,9 +96,7 @@ function CategoryPicker({
     </div>
   );
 }
-
-// ── SpineColorPicker ─────────────────────────────────
-function SpineColorPicker({
+export function SpineColorPicker({
   value,
   onChange,
 }: {
@@ -46,21 +104,17 @@ function SpineColorPicker({
   onChange: (c: string) => void;
 }) {
   return (
-    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+    <div className="flex gap-1.5 flex-wrap">
       {SPINE_PRESETS.map((color) => (
         <div
           key={color}
           onClick={() => onChange(color)}
+          className="w-6 h-6 rounded-sm cursor-pointer transition-all"
           style={{
-            width: 24,
-            height: 24,
-            borderRadius: 3,
             background: color,
-            cursor: "pointer",
             outline:
               value === color ? "2.5px solid " + INK : "2px solid transparent",
             outlineOffset: 2,
-            transition: "outline 0.1s",
           }}
         />
       ))}
@@ -68,7 +122,7 @@ function SpineColorPicker({
   );
 }
 
-function CardFormFields({
+export function CardFormFields({
   form,
   setForm,
 }: {
@@ -76,23 +130,23 @@ function CardFormFields({
   setForm: (fn: (p: CardFormData) => CardFormData) => void;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div className="flex flex-col gap-3.5">
       <div>
         <Label>TITLE *</Label>
         <input
           value={form.title}
           onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
           placeholder="Title"
-          style={inp()}
+          className={INP}
         />
       </div>
       <div>
-        <Label>SUBTITLE / AUTHOR / DATE</Label>
+        <Label>SUBTITLE / AUTHOR</Label>
         <input
           value={form.subtitle}
           onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
           placeholder="Optional"
-          style={inp()}
+          className={INP}
         />
       </div>
       <div>
@@ -110,7 +164,7 @@ function CardFormFields({
           onChange={(e) =>
             setForm((p) => ({ ...p, createdAt: e.target.value }))
           }
-          style={inpMono()}
+          className={INP_MONO}
         />
       </div>
       <div>
@@ -120,7 +174,7 @@ function CardFormFields({
           onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
           placeholder="Your notes, quotes, observations..."
           rows={5}
-          style={{ ...inp(), resize: "vertical", lineHeight: 1.6 }}
+          className={INP + " resize-y leading-relaxed"}
         />
       </div>
       <div>
@@ -129,7 +183,7 @@ function CardFormFields({
           value={form.tags}
           onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))}
           placeholder="travel, 2024, fiction"
-          style={inp()}
+          className={INP}
         />
       </div>
       <div>
@@ -143,8 +197,8 @@ function CardFormFields({
   );
 }
 
-// ── Shared Modal Shell ────────────────────────────────
-function CardModal({
+// ── Modal Shell ───────────────────────────────────────
+export function CardModal({
   title,
   onClose,
   onSubmit,
@@ -163,96 +217,43 @@ function CardModal({
 }) {
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(26,22,18,0.55)",
-        zIndex: 50,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-      }}
+      className="fixed inset-0 bg-[#1a1612]/55 z-50 flex items-center justify-center p-5 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        style={{
-          background: CREAM,
-          borderRadius: 4,
-          width: "100%",
-          maxWidth: 480,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          boxShadow: "0 32px 80px rgba(26,22,18,0.35)",
-          border: "1px solid #ddd4c4",
-        }}
+        className="bg-[#16181d] rounded-sm w-full max-w-md my-auto border border-[#1e2128] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {accentColor && (
           <div
-            style={{
-              height: 4,
-              background: accentColor,
-              borderRadius: "4px 4px 0 0",
-            }}
+            className="h-1 rounded-t-sm"
+            style={{ background: accentColor }}
           />
         )}
-        <div style={{ padding: "28px 32px 32px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              marginBottom: 24,
-            }}
-          >
-            <h2 style={serif(24, INK, 700)}>{title}</h2>
+        <div className="p-7 sm:p-8">
+          <div className="flex justify-between items-baseline mb-6">
+            <h2 className="font-[Cormorant_Garant,serif] text-2xl font-bold text-[#e8e3d5]">
+              {title}
+            </h2>
             <button
               onClick={onClose}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                ...mono(18, SEPIA),
-              }}
+              className="bg-transparent border-none cursor-pointer font-[Courier_Prime,monospace] text-lg text-[#4b5563] hover:text-[#e8e3d5] transition-colors"
             >
               ×
             </button>
           </div>
           {children}
-          <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
+          <div className="grid grid-cols-2 gap-2.5 mt-6">
             <button
               onClick={onClose}
-              style={{
-                flex: 1,
-                padding: "10px",
-                borderRadius: 3,
-                border: "1px solid #ddd4c4",
-                background: "transparent",
-                color: SEPIA,
-                cursor: "pointer",
-                fontFamily: "'Courier Prime', monospace",
-                fontSize: 12,
-              }}
+              className="py-2.5 rounded-sm border border-[#1e2128] bg-transparent text-[#4b5563] cursor-pointer font-[Courier_Prime,monospace] text-xs hover:bg-[#1e2128] transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={onSubmit}
               disabled={loading}
-              style={{
-                flex: 2,
-                padding: "10px",
-                borderRadius: 3,
-                border: "none",
-                background: INK,
-                color: CREAM,
-                cursor: "pointer",
-                fontFamily: "'Cormorant Garant', serif",
-                fontSize: 15,
-                fontWeight: 600,
-                opacity: loading ? 0.7 : 1,
-              }}
+              className="py-2.5 rounded-sm border-none bg-[#a3c47a] text-[#111] cursor-pointer font-[Cormorant_Garant,serif] text-[15px] font-semibold hover:opacity-85 transition-opacity disabled:opacity-60"
             >
               {loading ? "Saving…" : submitLabel}
             </button>
@@ -263,7 +264,6 @@ function CardModal({
   );
 }
 
-// ── Add Card Modal ────────────────────────────────────
 export function AddCardModal({
   onClose,
   onAdd,
@@ -281,7 +281,6 @@ export function AddCardModal({
     createdAt: toInputDate(new Date().toISOString()),
   });
   const [loading, setLoading] = useState(false);
-
   const submit = async () => {
     if (!form.title || !form.content) return;
     setLoading(true);
@@ -300,7 +299,6 @@ export function AddCardModal({
     setLoading(false);
     onClose();
   };
-
   return (
     <CardModal
       title="New Card"
@@ -314,7 +312,6 @@ export function AddCardModal({
   );
 }
 
-// ── Edit Card Modal ───────────────────────────────────
 export function EditCardModal({
   card,
   onClose,
@@ -334,7 +331,6 @@ export function EditCardModal({
     createdAt: toInputDate(card.createdAt),
   });
   const [loading, setLoading] = useState(false);
-
   const submit = async () => {
     if (!form.title || !form.content) return;
     setLoading(true);
@@ -353,7 +349,6 @@ export function EditCardModal({
     setLoading(false);
     onClose();
   };
-
   return (
     <CardModal
       title="Edit Card"
@@ -365,106 +360,5 @@ export function EditCardModal({
     >
       <CardFormFields form={form} setForm={setForm} />
     </CardModal>
-  );
-}
-
-// ── Delete Confirm Modal ─────────────────────────────
-export function DeleteModal({
-  card,
-  onConfirm,
-  onCancel,
-}: {
-  card: Card;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(26,22,18,0.6)",
-        zIndex: 60,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-      }}
-      onClick={onCancel}
-    >
-      <div
-        style={{
-          background: CREAM,
-          borderRadius: 4,
-          padding: "32px 32px 28px",
-          width: "100%",
-          maxWidth: 380,
-          boxShadow: "0 24px 60px rgba(26,22,18,0.35)",
-          border: "1px solid #ddd4c4",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Spine accent */}
-        <div
-          style={{
-            height: 4,
-            background: card.spineColor,
-            borderRadius: 2,
-            marginBottom: 24,
-          }}
-        />
-
-        <h3 style={serif(22, INK, 700, { marginBottom: 8 })}>
-          Remove this card?
-        </h3>
-        <p style={mono(12, SEPIA, { lineHeight: 1.6, marginBottom: 6 })}>
-          <strong
-            style={{ fontFamily: "'Cormorant Garant', serif", fontSize: 15 }}
-          >
-            {card.title}
-          </strong>
-        </p>
-        <p style={mono(11, "#b0a090", { marginBottom: 24 })}>
-          This will permanently delete the card and all its notes. This action
-          cannot be undone.
-        </p>
-
-        <div style={{ display: "flex", gap: 10 }}>
-          <button
-            onClick={onCancel}
-            style={{
-              flex: 1,
-              padding: "10px",
-              borderRadius: 3,
-              border: "1px solid #ddd4c4",
-              background: "transparent",
-              color: SEPIA,
-              cursor: "pointer",
-              fontFamily: "'Courier Prime', monospace",
-              fontSize: 12,
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              flex: 2,
-              padding: "10px",
-              borderRadius: 3,
-              border: "none",
-              background: RED,
-              color: "#fff",
-              cursor: "pointer",
-              fontFamily: "'Cormorant Garant', serif",
-              fontSize: 15,
-              fontWeight: 600,
-            }}
-          >
-            Delete card
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

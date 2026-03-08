@@ -1,0 +1,596 @@
+import { useState } from "react";
+import type { Task } from "./theme";
+import { TAG_COLOR, PRIORITY_COLOR } from "./theme";
+import { fmtDate, fmtDateTime, toInputDate } from "./utility";
+
+// ── Task Edit Modal ───────────────────────────────────
+export function TaskModal({
+  task,
+  onClose,
+  onUpdate,
+  onDelete,
+}: {
+  task: Task;
+  onClose: () => void;
+  onUpdate: (id: string, updated: Task) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [form, setForm] = useState({
+    title: task.title,
+    tag: task.tag,
+    priority: task.priority,
+    dueDate: task.dueDate.slice(0, 10),
+  });
+  const [saving, setSaving] = useState(false);
+  const [toggling, setToggling] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const TAG_LIST = ["Design", "Dev", "Docs", "Content", "Management"] as const;
+  const PRIORITY_LIST = ["High", "Medium", "Low"] as const;
+
+  const inpCls =
+    "w-full bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-2 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#a3c47a] transition-colors";
+
+  async function handleSave() {
+    setSaving(true);
+    const res = await fetch(`/api/tasks/${task.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: form.title,
+        tag: form.tag,
+        priority: form.priority,
+        dueDate: form.dueDate,
+      }),
+    });
+    if (res.ok) {
+      const updated: Task = await res.json();
+      onUpdate(task.id, updated);
+      onClose();
+    }
+    setSaving(false);
+  }
+
+  async function handleToggleStatus() {
+    setToggling(true);
+    const newDone = !task.done;
+    const res = await fetch(`/api/tasks/${task.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ done: newDone }),
+    });
+    if (res.ok) {
+      const updated: Task = await res.json();
+      onUpdate(task.id, updated);
+    }
+    setToggling(false);
+    onClose();
+  }
+
+  async function handleDelete() {
+    await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
+    onDelete(task.id);
+    onClose();
+  }
+
+  const tag = TAG_COLOR[task.tag];
+  const priorityColor = PRIORITY_COLOR[task.priority];
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#16181d] rounded-2xl w-full max-w-md border border-[#2a2d35] shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Color top bar based on priority */}
+        <div
+          className="h-1 w-full"
+          style={{
+            background: `linear-gradient(90deg, ${priorityColor}, ${priorityColor}66)`,
+          }}
+        />
+
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3 mb-5">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span
+                  className="font-mono text-[10px] px-2 py-0.5 rounded-full"
+                  style={{ background: tag.bg, color: tag.text }}
+                >
+                  {task.tag}
+                </span>
+                <div className="flex items-center gap-1">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: priorityColor }}
+                  />
+                  <span className="font-mono text-[10px] text-[#6b7280]">
+                    {task.priority}
+                  </span>
+                </div>
+                {/* Status badge */}
+                <span
+                  className={`font-mono text-[10px] px-2 py-0.5 rounded-full border ${
+                    task.done
+                      ? "bg-[#a3c47a18] border-[#a3c47a44] text-[#a3c47a]"
+                      : "bg-[#fbbf2418] border-[#fbbf2444] text-[#fbbf24]"
+                  }`}
+                >
+                  {task.done ? "✓ DONE" : "● PENDING"}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="bg-transparent border-none text-[#4b5563] cursor-pointer text-xl leading-none hover:text-[#9ca3af] transition-colors shrink-0"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Form fields */}
+          <div className="flex flex-col gap-3 mb-5">
+            <div>
+              <label className="block font-mono text-[10px] text-[#4b5563] tracking-widest mb-1.5">
+                TITLE
+              </label>
+              <input
+                value={form.title}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, title: e.target.value }))
+                }
+                className={inpCls}
+                placeholder="Task title…"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className="block font-mono text-[10px] text-[#4b5563] tracking-widest mb-1.5">
+                  TAG
+                </label>
+                <select
+                  value={form.tag}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      tag: e.target.value as Task["tag"],
+                    }))
+                  }
+                  className={inpCls}
+                >
+                  {TAG_LIST.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block font-mono text-[10px] text-[#4b5563] tracking-widest mb-1.5">
+                  PRIORITY
+                </label>
+                <select
+                  value={form.priority}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      priority: e.target.value as Task["priority"],
+                    }))
+                  }
+                  className={inpCls}
+                >
+                  {PRIORITY_LIST.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-mono text-[10px] text-[#4b5563] tracking-widest mb-1.5">
+                DUE DATE
+              </label>
+              <input
+                type="date"
+                value={form.dueDate}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, dueDate: e.target.value }))
+                }
+                className={inpCls}
+              />
+            </div>
+          </div>
+
+          {/* Time info */}
+          <div className="bg-[#111214] rounded-xl p-3.5 mb-5 flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="font-mono text-[10px] text-[#374151] tracking-widest">
+                DUE
+              </span>
+              <span className="font-mono text-[11px] text-[#9ca3af]">
+                {fmtDate(task.dueDate)}
+              </span>
+            </div>
+            <div className="h-px bg-[#1e2128]" />
+            <div className="flex justify-between items-center">
+              <span className="font-mono text-[10px] text-[#374151] tracking-widest">
+                COMPLETED
+              </span>
+              {task.done && task.doneAt ? (
+                <span className="font-mono text-[11px] text-[#a3c47a]">
+                  {fmtDateTime(task.doneAt)}
+                </span>
+              ) : (
+                <span className="font-mono text-[11px] text-[#2a2d35]">—</span>
+              )}
+            </div>
+          </div>
+
+          {/* Toggle status button */}
+          <button
+            onClick={handleToggleStatus}
+            disabled={toggling}
+            className="w-full py-3 rounded-xl font-mono text-[11px] font-semibold tracking-widest border-none cursor-pointer transition-all duration-200 mb-3 flex items-center justify-center gap-2 disabled:opacity-60"
+            style={{
+              background: task.done ? "#fbbf2418" : "#a3c47a",
+              color: task.done ? "#fbbf24" : "#111",
+              border: task.done ? "1px solid #fbbf2444" : "none",
+            }}
+          >
+            {toggling ? (
+              "UPDATING…"
+            ) : task.done ? (
+              <>
+                <span>↩</span> MARK AS PENDING
+              </>
+            ) : (
+              <>
+                <span>✓</span> MARK AS DONE
+              </>
+            )}
+          </button>
+
+          {/* Save + Delete row */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {!confirmDelete ? (
+              <>
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="py-2.5 rounded-xl bg-transparent border border-[#2a2d35] text-[#f87171] cursor-pointer font-mono text-[10px] tracking-widest hover:border-[#f87171] hover:bg-[#f8717118] transition-all"
+                >
+                  DELETE
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="py-2.5 rounded-xl border-none bg-[#2a2d35] text-[#e8e3d5] cursor-pointer font-mono text-[10px] tracking-widest hover:bg-[#374151] transition-colors disabled:opacity-60"
+                >
+                  {saving ? "SAVING…" : "SAVE CHANGES"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="py-2.5 rounded-xl bg-transparent border border-[#2a2d35] text-[#6b7280] cursor-pointer font-mono text-[10px] tracking-widest hover:border-[#374151] transition-colors"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="py-2.5 rounded-xl border-none bg-[#f87171] text-white cursor-pointer font-mono text-[10px] tracking-widest font-semibold hover:opacity-90 transition-opacity"
+                >
+                  CONFIRM DELETE
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Status Modal ──────────────────────────────────────
+export function StatusModal({
+  task,
+  onClose,
+  onUpdate,
+}: {
+  task: Task;
+  onClose: () => void;
+  onUpdate: (id: string, patch: Partial<Task>) => void;
+}) {
+  const today = toInputDate(new Date().toISOString());
+  const [doneAt, setDoneAt] = useState<string>(
+    task.doneAt ? toInputDate(task.doneAt) : today,
+  );
+  const [saving, setSaving] = useState(false);
+
+  async function markDone() {
+    setSaving(true);
+    const res = await fetch(`/api/tasks/${task.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ done: true, doneAt }),
+    });
+    if (res.ok) {
+      const updated: Task = await res.json();
+      onUpdate(task.id, updated);
+    }
+    setSaving(false);
+    onClose();
+  }
+
+  async function markPending() {
+    setSaving(true);
+    const res = await fetch(`/api/tasks/${task.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ done: false }),
+    });
+    if (res.ok) {
+      const updated: Task = await res.json();
+      onUpdate(task.id, updated);
+    }
+    setSaving(false);
+    onClose();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#16181d] rounded-2xl w-full max-w-sm border border-[#2a2d35] shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top accent bar */}
+        <div
+          className="h-1"
+          style={{
+            background: task.done
+              ? "linear-gradient(90deg,#a3c47a,#6ee7b7)"
+              : "linear-gradient(90deg,#fbbf24,#fbbf2466)",
+          }}
+        />
+
+        <div className="p-5">
+          {/* Task info */}
+          <div className="mb-4">
+            <p className="font-mono text-[10px] text-[#4b5563] tracking-widest mb-1">
+              TASK STATUS
+            </p>
+            <p
+              className="text-[#e8e3d5] text-sm font-medium leading-snug truncate"
+              style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}
+            >
+              {task.title}
+            </p>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span
+                className="font-mono text-[10px] px-2 py-0.5 rounded-full"
+                style={{
+                  background: TAG_COLOR[task.tag].bg,
+                  color: TAG_COLOR[task.tag].text,
+                }}
+              >
+                {task.tag}
+              </span>
+              <div className="flex items-center gap-1">
+                <div
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: PRIORITY_COLOR[task.priority] }}
+                />
+                <span className="font-mono text-[10px] text-[#6b7280]">
+                  {task.priority}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Current status display */}
+          <div className="bg-[#111214] rounded-xl p-3.5 mb-4">
+            <div className="flex justify-between items-center mb-2.5">
+              <span className="font-mono text-[10px] text-[#374151] tracking-widest">
+                CURRENT STATUS
+              </span>
+              <span
+                className={`font-mono text-[10px] px-2.5 py-1 rounded-full border ${
+                  task.done
+                    ? "bg-[#a3c47a18] border-[#a3c47a44] text-[#a3c47a]"
+                    : "bg-[#fbbf2418] border-[#fbbf2444] text-[#fbbf24]"
+                }`}
+              >
+                {task.done ? "✓ DONE" : "● PENDING"}
+              </span>
+            </div>
+            <div className="h-px bg-[#1e2128] mb-2.5" />
+            <div className="flex justify-between items-center">
+              <span className="font-mono text-[10px] text-[#374151] tracking-widest">
+                DUE DATE
+              </span>
+              <span className="font-mono text-[11px] text-[#9ca3af]">
+                {fmtDate(task.dueDate)}
+              </span>
+            </div>
+            {task.done && task.doneAt && (
+              <>
+                <div className="h-px bg-[#1e2128] my-2.5" />
+                <div className="flex justify-between items-center">
+                  <span className="font-mono text-[10px] text-[#374151] tracking-widest">
+                    COMPLETED
+                  </span>
+                  <span className="font-mono text-[11px] text-[#a3c47a]">
+                    {fmtDate(task.doneAt)}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Action area */}
+          {!task.done ? (
+            <>
+              {/* Date picker for completion date */}
+              <div className="mb-4">
+                <label className="block font-mono text-[10px] text-[#4b5563] tracking-widest mb-1.5">
+                  DATE COMPLETED
+                </label>
+                <input
+                  type="date"
+                  value={doneAt}
+                  max={today}
+                  onChange={(e) => setDoneAt(e.target.value)}
+                  className="w-full bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-2 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#a3c47a] transition-colors"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  onClick={onClose}
+                  className="py-2.5 rounded-xl border border-[#2a2d35] bg-transparent text-[#6b7280] cursor-pointer font-mono text-[10px] tracking-widest hover:border-[#374151] transition-colors"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={markDone}
+                  disabled={saving}
+                  className="py-2.5 rounded-xl border-none bg-[#a3c47a] text-[#111] cursor-pointer font-mono text-[10px] font-semibold tracking-widest hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-1.5"
+                >
+                  {saving ? (
+                    "SAVING…"
+                  ) : (
+                    <>
+                      <span>✓</span> MARK DONE
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                onClick={onClose}
+                className="py-2.5 rounded-xl border border-[#2a2d35] bg-transparent text-[#6b7280] cursor-pointer font-mono text-[10px] tracking-widest hover:border-[#374151] transition-colors"
+              >
+                CLOSE
+              </button>
+              <button
+                onClick={markPending}
+                disabled={saving}
+                className="py-2.5 rounded-xl border border-[#fbbf2444] bg-[#fbbf2418] text-[#fbbf24] cursor-pointer font-mono text-[10px] tracking-widest hover:bg-[#fbbf2428] transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5"
+              >
+                {saving ? (
+                  "SAVING…"
+                ) : (
+                  <>
+                    <span>↩</span> REOPEN
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── AddTaskModal ──────────────────────────────────────
+export function AddTaskModal({
+  onClose,
+  onAdd,
+}: {
+  onClose: () => void;
+  onAdd: (t: Omit<Task, "id" | "done" | "doneAt">) => Promise<void>;
+}) {
+  const [form, setForm] = useState({
+    title: "",
+    tag: "Dev",
+    priority: "Medium",
+    dueDate: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const inpCls =
+    "w-full bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-2 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#a3c47a] transition-colors";
+  const submit = async () => {
+    if (!form.title || !form.dueDate) return;
+    setLoading(true);
+    await onAdd(form as Omit<Task, "id" | "done" | "doneAt">);
+    setLoading(false);
+    onClose();
+  };
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#16181d] rounded-2xl p-6 sm:p-7 w-full max-w-sm border border-[#2a2d35] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="font-mono text-[11px] text-[#a3c47a] tracking-widest mb-5">
+          NEW TASK
+        </div>
+        <div className="flex flex-col gap-3">
+          <input
+            placeholder="Task title…"
+            value={form.title}
+            onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+            className={inpCls}
+          />
+          <div className="grid grid-cols-2 gap-2.5">
+            <select
+              value={form.tag}
+              onChange={(e) => setForm((p) => ({ ...p, tag: e.target.value }))}
+              className={inpCls}
+            >
+              {["Design", "Dev", "Docs", "Content", "Management"].map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+            <select
+              value={form.priority}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, priority: e.target.value }))
+              }
+              className={inpCls}
+            >
+              {["High", "Medium", "Low"].map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+          <input
+            type="date"
+            value={form.dueDate}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, dueDate: e.target.value }))
+            }
+            className={inpCls}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2.5 mt-5">
+          <button
+            onClick={onClose}
+            className="py-2.5 rounded-xl border border-[#2a2d35] bg-transparent text-[#6b7280] cursor-pointer font-mono text-[11px] hover:border-[#374151] transition-colors"
+          >
+            CANCEL
+          </button>
+          <button
+            onClick={submit}
+            disabled={loading}
+            className="py-2.5 rounded-xl border-none bg-[#a3c47a] text-[#111] cursor-pointer font-mono text-[11px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+          >
+            {loading ? "SAVING…" : "ADD TASK"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

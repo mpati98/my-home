@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import "./globals.css";
-import MainHeader from "@/components/main-header/main-header";
-export const metadata = {
-  title: "Arti",
-  description: "Delicious meals, shared by a food-loving community.",
+import NavBar from "@/components/main/NavBar";
+
+export const metadata: Metadata = {
+  title: "Workspace",
+  description: "Next.js + Prisma + PostgreSQL",
 };
 
 export default function RootLayout({
@@ -12,8 +14,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <MainHeader />
+      <body className="bg-bg text-bright min-h-screen">
+        <NavBar />
         {children}
       </body>
     </html>
