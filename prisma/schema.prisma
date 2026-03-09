@@ -51,3 +51,24 @@ enum CardCategory {
   Experience
   Collection
 }
+
+model Topic {
+  id          String      @id @default(cuid())
+  title       String
+  category    String
+  description String
+  coverColor  String      @default("#4a6fa5")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  subCards    SubCard[]
+}
+
+model SubCard {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId     String
+}

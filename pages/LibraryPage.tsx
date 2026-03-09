@@ -1,13 +1,13 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Card, CardCategory, CAT_ICON } from "@/utilities/collection/theme";
+import { Card, CardCategory, CAT_ICON } from "@/utilities/library/theme";
 import {
   AddCardModal,
   EditCardModal,
   DeleteModal,
-} from "@/utilities/collection/modal";
-import { monthKey, monthLabel } from "@/utilities/collection/utility";
-import FlipCard from "@/components/collection/FlipCard";
+} from "@/utilities/library/modal";
+import { monthKey, monthLabel } from "@/utilities/library/utility";
+import FlipCard from "@/components/library/FlipCard";
 export default function LibraryPage({
   initialCards,
 }: {
