@@ -230,7 +230,7 @@ export default function CollectionPage({
 
         {/* Topics grid */}
         {visible.length > 0 ? (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 pt-1.5">
             {visible.map((topic, i) => (
               <div
                 key={topic.id}

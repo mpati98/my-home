@@ -63,6 +63,27 @@ model Topic {
   subCards    SubCard[]
 }
 
+
+
+model LearnWord {
+  id           String   @id @default(cuid())
+  word         String
+  type         String   @default("word")
+  phonetic     String?
+  partOfSpeech String?
+  meaning      String
+  description  String
+  examples     String[]
+  etymology    String?
+  references   Json     @default("[]")
+  tags         String[]
+  isSaved      Boolean  @default(false)
+  dailyDate    String?
+  subCardId    String?  @unique
+  topicId      String?
+  createdAt    DateTime @default(now())
+}
+
 model SubCard {
   id          String   @id @default(cuid())
   title       String

@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import type { Task } from "@/utilities/workspace/theme";
 import { isoToYMD, toYMD } from "@/utilities/workspace/utility";
 import { PRIORITY_COLOR } from "@/utilities/workspace/theme";
@@ -14,7 +13,6 @@ export default function CalendarView({
 }: {
   initialTasks: Task[];
 }) {
-  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [view, setView] = useState(
     new Date(TODAY.getFullYear(), TODAY.getMonth(), 1),
