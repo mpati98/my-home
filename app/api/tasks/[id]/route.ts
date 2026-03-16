@@ -1,98 +1,102 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Priority, TaskTag } from "@prisma/client";
+import { Priority, TaskTag, TaskStatus } from "@prisma/client";
 
-// GET /api/tasks?filter=All|Pending|Done
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const filter = searchParams.get("filter");
-
-    const tasks = await prisma.task.findMany({
-      where:
-        filter === "Done"
-          ? { done: true }
-          : filter === "Pending"
-          ? { done: false }
-          : undefined,
-      orderBy: { dueDate: "asc" },
-    });
-    return NextResponse.json(tasks);
-  } catch {
-    return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
+function todayMidnight() {
+  const d = new Date(); d.setHours(0,0,0,0); return d;
+}
+function escalatedPriority(current: Priority, dueDate: Date): Priority {
+  const today = todayMidnight();
+  const due   = new Date(dueDate); due.setHours(0,0,0,0);
+  const diff  = Math.round((due.getTime() - today.getTime()) / 86400000);
+  if (diff <= 0) return "High";
+  if (diff === 1) {
+    if (current === "Low")    return "Medium";
+    if (current === "Medium") return "High";
+    return "High";
   }
+  return current;
+}
+function computeStatus(done: boolean, doneAt: Date | null, dueDate: Date): TaskStatus {
+  if (done && doneAt) {
+    const doneMid = new Date(doneAt); doneMid.setHours(0,0,0,0);
+    const dueMid  = new Date(dueDate); dueMid.setHours(0,0,0,0);
+    return doneMid <= dueMid ? "on_time" : "over_due";
+  }
+  const today = todayMidnight();
+  const due   = new Date(dueDate); due.setHours(0,0,0,0);
+  return due <= today ? "processing" : "waiting";
+}
+function serialize(t: any) {
+  return {
+    ...t,
+    dueDate:   t.dueDate.toISOString(),
+    doneAt:    t.doneAt ? t.doneAt.toISOString().slice(0,10) : null,
+    createdAt: t.createdAt.toISOString(),
+    updatedAt: t.updatedAt.toISOString(),
+  };
 }
 
-// POST /api/tasks
-export async function POST(request: Request) {
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
-    const body = await request.json();
-    const { title, tag, priority, dueDate } = body;
-    if (!title || !tag || !priority || !dueDate) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-    const task = await prisma.task.create({
-      data: {
-        title,
-        tag: tag as TaskTag,
-        priority: priority as Priority,
-        dueDate: new Date(dueDate),
-      },
-    });
-    return NextResponse.json(task, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
-  }
-}
-
-// PATCH — toggle done OR full update
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params;
     const body = await req.json();
-    const task = await prisma.task.findUnique({ where: { id } });
+    const task = await prisma.task.findUnique({ where: { id: params.id } });
     if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    // Full update payload
     const data: Record<string, unknown> = {};
-    if (body.title     !== undefined) data.title    = body.title;
-    if (body.tag       !== undefined) data.tag       = body.tag as TaskTag;
-    if (body.priority  !== undefined) data.priority  = body.priority as Priority;
-    if (body.dueDate   !== undefined) data.dueDate   = new Date(body.dueDate);
 
-    // Toggle done — set/clear doneAt (date only, midnight UTC)
+    if (body.title    !== undefined) data.title    = body.title;
+    if (body.tag      !== undefined) data.tag      = body.tag as TaskTag;
+    if (body.dueDate  !== undefined) data.dueDate  = new Date(body.dueDate);
+    if (body.notes    !== undefined) data.notes    = body.notes;
+
+    // Priority: allow explicit override, then re-escalate
+    const basePriority = (body.priority ?? task.priority) as Priority;
+    const dueDateFinal = data.dueDate ? (data.dueDate as Date) : task.dueDate;
+
     if (body.done !== undefined) {
-      data.done   = body.done;
-      data.doneAt = body.done
-        ? (body.doneAt ? new Date(body.doneAt + "T00:00:00Z") : new Date(new Date().toISOString().slice(0,10) + "T00:00:00Z"))
+      const nowDone = body.done as boolean;
+      const doneAtDate = nowDone
+        ? (body.doneAt
+            ? new Date(body.doneAt + "T00:00:00Z")
+            : new Date(new Date().toISOString().slice(0,10) + "T00:00:00Z"))
         : null;
-    } else if (Object.keys(body).length === 0) {
-      // No body = simple toggle
-      const nowDone = !task.done;
+
       data.done   = nowDone;
-      data.doneAt = nowDone ? new Date(new Date().toISOString().slice(0,10) + "T00:00:00Z") : null;
+      data.doneAt = doneAtDate;
+      data.status = computeStatus(nowDone, doneAtDate, dueDateFinal);
+      // Only escalate priority for pending tasks
+      data.priority = nowDone ? basePriority : escalatedPriority(basePriority, dueDateFinal);
+    } else if (Object.keys(body).length === 0) {
+      // Simple toggle
+      const nowDone  = !task.done;
+      const doneAtD  = nowDone ? new Date(new Date().toISOString().slice(0,10) + "T00:00:00Z") : null;
+      data.done      = nowDone;
+      data.doneAt    = doneAtD;
+      data.status    = computeStatus(nowDone, doneAtD, dueDateFinal);
+      data.priority  = nowDone ? task.priority : escalatedPriority(task.priority, dueDateFinal);
+    } else {
+      // Non-done update — recompute escalation
+      data.priority = task.done ? basePriority : escalatedPriority(basePriority, dueDateFinal);
+      if (!task.done) {
+        data.status = computeStatus(false, null, dueDateFinal);
+      }
     }
 
-    const updated = await prisma.task.update({ where: { id }, data });
-    return NextResponse.json({
-      ...updated,
-      dueDate:   updated.dueDate.toISOString(),
-      doneAt:    updated.doneAt?.toISOString() ?? null,
-      createdAt: updated.createdAt.toISOString(),
-      updatedAt: updated.updatedAt.toISOString(),
-    });
+    const updated = await prisma.task.update({ where: { id: params.id }, data });
+    return NextResponse.json(serialize(updated));
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await prisma.task.delete({ where: { id } });
+    await prisma.card.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete card" }, { status: 500 });
   }
 }

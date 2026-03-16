@@ -1,8 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
-import type { Task } from "@/utilities/workspace/theme";
-import { isoToKey } from "@/utilities/workspace/utility";
-import { TAG_COLOR, PRIORITY_COLOR } from "@/utilities/workspace/theme";
+import type { Task, TaskStatus } from "@/utilities/workspace/theme";
+import {
+  dueDateDiff,
+  EscalationBadge,
+  isoToKey,
+} from "@/utilities/workspace/utility";
+import {
+  TAG_COLOR,
+  PRIORITY_COLOR,
+  STATUS_META,
+} from "@/utilities/workspace/theme";
 import { fmtDate } from "@/utilities/workspace/utility";
 
 const TODAY = new Date(2026, 2, 3); // March 3, 2026
@@ -247,38 +255,30 @@ export function TaskRow({
   onDelete,
 }: {
   task: Task;
-  onOpenStatus: (task: Task) => void;
+  onOpenStatus: (t: Task) => void;
   onDelete: (id: string) => void;
 }) {
   const [hov, setHov] = useState(false);
   const tag = TAG_COLOR[task.tag];
+  const sm = STATUS_META[task.status];
+  const diff = dueDateDiff(task.dueDate);
 
   return (
     <div
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-150 border-b border-[#1a1d2480] last:border-0"
+      className="flex items-center gap-2.5 px-4 py-3 rounded-xl transition-colors duration-150 border-b border-[#1a1d2480] last:border-0"
       style={{ background: hov ? "#1a1d24" : "transparent" }}
     >
-      {/* Status pill — replaces checkbox */}
+      {/* Status pill button */}
       <button
         onClick={() => onOpenStatus(task)}
-        title={
-          task.done
-            ? `Done on ${task.doneAt ? fmtDate(task.doneAt) : "—"} · click to change`
-            : "Pending · click to mark done"
-        }
-        className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-full border cursor-pointer transition-all duration-200 font-mono text-[9px] tracking-wide"
-        style={{
-          background: task.done ? "#a3c47a18" : "transparent",
-          borderColor: task.done ? "#a3c47a55" : "#2a2d35",
-          color: task.done ? "#a3c47a" : "#4b5563",
-          minWidth: "60px",
-          justifyContent: "center",
-        }}
+        title="Click to update status"
+        className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-full border cursor-pointer transition-all duration-200 font-mono text-[9px] tracking-wide min-w-18 justify-center"
+        style={{ background: sm.bg, borderColor: sm.border, color: sm.color }}
       >
-        <span style={{ fontSize: "9px" }}>{task.done ? "✓" : "●"}</span>
-        {task.done ? "DONE" : "OPEN"}
+        <span>{sm.icon}</span>
+        {sm.label.toUpperCase()}
       </button>
 
       {/* Title */}
@@ -293,22 +293,34 @@ export function TaskRow({
         {task.title}
       </span>
 
-      {/* doneAt date — shown when done */}
+      {/* Escalation badge */}
+      {!task.done && (
+        <EscalationBadge dueDate={task.dueDate} done={task.done} />
+      )}
+
+      {/* Date info */}
       {task.done && task.doneAt ? (
         <span className="font-mono text-[10px] text-[#a3c47a] shrink-0 hidden sm:block">
           ✓ {fmtDate(task.doneAt)}
         </span>
       ) : (
-        <span className="font-mono text-[11px] text-[#374151] shrink-0 hidden sm:block">
-          Due{" "}
-          {new Date(task.dueDate).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          })}
+        <span
+          className="font-mono text-[10px] shrink-0 hidden sm:block"
+          style={{
+            color: diff <= 0 ? "#f87171" : diff === 1 ? "#fbbf24" : "#374151",
+          }}
+        >
+          {diff < 0
+            ? `${Math.abs(diff)}d overdue`
+            : diff === 0
+              ? "Due today"
+              : diff === 1
+                ? "Due tomorrow"
+                : `Due ${fmtDate(task.dueDate)}`}
         </span>
       )}
 
-      {/* Tag pill */}
+      {/* Tag */}
       <span
         className="hidden sm:inline font-mono text-[10px] px-2.5 py-0.5 rounded-full shrink-0 tracking-wide"
         style={{ background: tag.bg, color: tag.text }}
@@ -316,6 +328,15 @@ export function TaskRow({
         {task.tag}
       </span>
 
+      {/* Notes indicator */}
+      {task.notes && (
+        <span
+          title={task.notes}
+          className="font-mono text-[9px] text-[#4b5563] bg-[#1a1d24] border border-[#2a2d35] px-1.5 py-0.5 rounded-full shrink-0 hidden sm:block cursor-default"
+        >
+          ✎
+        </span>
+      )}
       {/* Priority dot */}
       <div
         className="w-2 h-2 rounded-full shrink-0"
@@ -331,6 +352,52 @@ export function TaskRow({
           ✕
         </button>
       )}
+    </div>
+  );
+}
+
+// ── Status summary strip ──────────────────────────────
+export function StatusStrip({ tasks }: { tasks: Task[] }) {
+  const counts: Record<TaskStatus, number> = {
+    waiting: 0,
+    processing: 0,
+    on_time: 0,
+    over_due: 0,
+  };
+  tasks.forEach((t) => {
+    counts[t.status] = (counts[t.status] ?? 0) + 1;
+  });
+  const entries = [
+    "over_due",
+    "processing",
+    "waiting",
+    "on_time",
+  ] as TaskStatus[];
+  return (
+    <div className="flex gap-2 flex-wrap">
+      {entries.map((s) => {
+        const m = STATUS_META[s];
+        return (
+          <div
+            key={s}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border"
+            style={{ background: m.bg, borderColor: m.border }}
+          >
+            <span className="font-mono text-[10px]" style={{ color: m.color }}>
+              {m.icon}
+            </span>
+            <span
+              className="font-mono text-[10px] font-semibold"
+              style={{ color: m.color }}
+            >
+              {counts[s]}
+            </span>
+            <span className="font-mono text-[9px] text-[#4b5563]">
+              {m.label}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

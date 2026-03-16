@@ -12,25 +12,35 @@ model Task {
   title     String
   tag       TaskTag
   priority  Priority
+  status    TaskStatus  @default(waiting)
   done      Boolean     @default(false)
   doneAt    DateTime?
   dueDate   DateTime
+  notes     String?     @db.Text
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 }
 
 enum TaskTag {
-  Design
-  Dev
-  Docs
-  Content
-  Management
+  Adhoc
+  Event
+  Fair
+  External
+  Data
+  Learning
 }
 
 enum Priority {
   High
   Medium
   Low
+}
+
+enum TaskStatus {
+  waiting
+  processing
+  on_time
+  over_due
 }
 
 model Card {

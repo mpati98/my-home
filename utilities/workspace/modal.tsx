@@ -1,7 +1,13 @@
 import { useState } from "react";
-import type { Task } from "./theme";
-import { TAG_COLOR, PRIORITY_COLOR } from "./theme";
-import { fmtDate, fmtDateTime, toInputDate } from "./utility";
+import type { Task, TaskStatus } from "./theme";
+import {
+  TAG_COLOR,
+  PRIORITY_COLOR,
+  PRIORITY_LIST,
+  TAG_LIST,
+  STATUS_META,
+} from "./theme";
+import { fmtDate, fmtDateTime, StatusBadge, toInputDate } from "./utility";
 
 // ── Task Edit Modal ───────────────────────────────────
 export function TaskModal({
@@ -24,9 +30,6 @@ export function TaskModal({
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-
-  const TAG_LIST = ["Design", "Dev", "Docs", "Content", "Management"] as const;
-  const PRIORITY_LIST = ["High", "Medium", "Low"] as const;
 
   const inpCls =
     "w-full bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-2 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#a3c47a] transition-colors";
@@ -309,18 +312,41 @@ export function StatusModal({
   const [doneAt, setDoneAt] = useState<string>(
     task.doneAt ? toInputDate(task.doneAt) : today,
   );
+  const [notes, setNotes] = useState<string>(task.notes ?? "");
   const [saving, setSaving] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
+
+  function previewStatus(): TaskStatus {
+    const doneD = new Date(doneAt + "T00:00:00Z");
+    const dueD = new Date(task.dueDate);
+    dueD.setHours(0, 0, 0, 0);
+    return doneD <= dueD ? "on_time" : "over_due";
+  }
+
+  async function saveNotes() {
+    const res = await fetch(`/api/tasks/${task.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes }),
+    });
+    if (res.ok) {
+      const u: Task = await res.json();
+      onUpdate(task.id, u);
+      setNotesSaved(true);
+      setTimeout(() => setNotesSaved(false), 1800);
+    }
+  }
 
   async function markDone() {
     setSaving(true);
     const res = await fetch(`/api/tasks/${task.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ done: true, doneAt }),
+      body: JSON.stringify({ done: true, doneAt, notes }),
     });
     if (res.ok) {
-      const updated: Task = await res.json();
-      onUpdate(task.id, updated);
+      const u: Task = await res.json();
+      onUpdate(task.id, u);
     }
     setSaving(false);
     onClose();
@@ -331,15 +357,20 @@ export function StatusModal({
     const res = await fetch(`/api/tasks/${task.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ done: false }),
+      body: JSON.stringify({ done: false, notes }),
     });
     if (res.ok) {
-      const updated: Task = await res.json();
-      onUpdate(task.id, updated);
+      const u: Task = await res.json();
+      onUpdate(task.id, u);
     }
     setSaving(false);
     onClose();
   }
+
+  const sm = STATUS_META[task.status];
+  const preview = previewStatus();
+  const inpCls =
+    "w-full bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-2 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#a3c47a] transition-colors";
 
   return (
     <div
@@ -350,29 +381,25 @@ export function StatusModal({
         className="bg-[#16181d] rounded-2xl w-full max-w-sm border border-[#2a2d35] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top accent bar */}
         <div
           className="h-1"
           style={{
-            background: task.done
-              ? "linear-gradient(90deg,#a3c47a,#6ee7b7)"
-              : "linear-gradient(90deg,#fbbf24,#fbbf2466)",
+            background: `linear-gradient(90deg,${sm.color},${sm.color}55)`,
           }}
         />
-
-        <div className="p-5">
+        <div className="p-5 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
           {/* Task info */}
-          <div className="mb-4">
+          <div>
             <p className="font-mono text-[10px] text-[#4b5563] tracking-widest mb-1">
               TASK STATUS
             </p>
             <p
-              className="text-[#e8e3d5] text-sm font-medium leading-snug truncate"
+              className="text-[#e8e3d5] text-sm font-medium leading-snug mb-2"
               style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}
             >
               {task.title}
             </p>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <span
                 className="font-mono text-[10px] px-2 py-0.5 rounded-full"
                 style={{
@@ -391,26 +418,12 @@ export function StatusModal({
                   {task.priority}
                 </span>
               </div>
+              <StatusBadge status={task.status} />
             </div>
           </div>
 
-          {/* Current status display */}
-          <div className="bg-[#111214] rounded-xl p-3.5 mb-4">
-            <div className="flex justify-between items-center mb-2.5">
-              <span className="font-mono text-[10px] text-[#374151] tracking-widest">
-                CURRENT STATUS
-              </span>
-              <span
-                className={`font-mono text-[10px] px-2.5 py-1 rounded-full border ${
-                  task.done
-                    ? "bg-[#a3c47a18] border-[#a3c47a44] text-[#a3c47a]"
-                    : "bg-[#fbbf2418] border-[#fbbf2444] text-[#fbbf24]"
-                }`}
-              >
-                {task.done ? "✓ DONE" : "● PENDING"}
-              </span>
-            </div>
-            <div className="h-px bg-[#1e2128] mb-2.5" />
+          {/* Info panel */}
+          <div className="bg-[#111214] rounded-xl p-3.5 flex flex-col gap-2.5">
             <div className="flex justify-between items-center">
               <span className="font-mono text-[10px] text-[#374151] tracking-widest">
                 DUE DATE
@@ -419,9 +432,16 @@ export function StatusModal({
                 {fmtDate(task.dueDate)}
               </span>
             </div>
+            <div className="h-px bg-[#1e2128]" />
+            <div className="flex justify-between items-center">
+              <span className="font-mono text-[10px] text-[#374151] tracking-widest">
+                STATUS
+              </span>
+              <StatusBadge status={task.status} />
+            </div>
             {task.done && task.doneAt && (
               <>
-                <div className="h-px bg-[#1e2128] my-2.5" />
+                <div className="h-px bg-[#1e2128]" />
                 <div className="flex justify-between items-center">
                   <span className="font-mono text-[10px] text-[#374151] tracking-widest">
                     COMPLETED
@@ -434,11 +454,38 @@ export function StatusModal({
             )}
           </div>
 
-          {/* Action area */}
+          {/* Notes field */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="font-mono text-[10px] text-[#4b5563] tracking-widest">
+                NOTES
+              </label>
+              {notes !== (task.notes ?? "") && (
+                <button
+                  onClick={saveNotes}
+                  className="font-mono text-[9px] px-2 py-0.5 rounded-full border-none cursor-pointer transition-colors"
+                  style={{
+                    background: notesSaved ? "#a3c47a22" : "#2a2d35",
+                    color: notesSaved ? "#a3c47a" : "#9ca3af",
+                  }}
+                >
+                  {notesSaved ? "✓ SAVED" : "SAVE NOTES"}
+                </button>
+              )}
+            </div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add notes, links, context…"
+              rows={4}
+              className={inpCls + " resize-y leading-relaxed"}
+            />
+          </div>
+
+          {/* Action */}
           {!task.done ? (
             <>
-              {/* Date picker for completion date */}
-              <div className="mb-4">
+              <div>
                 <label className="block font-mono text-[10px] text-[#4b5563] tracking-widest mb-1.5">
                   DATE COMPLETED
                 </label>
@@ -447,8 +494,14 @@ export function StatusModal({
                   value={doneAt}
                   max={today}
                   onChange={(e) => setDoneAt(e.target.value)}
-                  className="w-full bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-2 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#a3c47a] transition-colors"
+                  className={inpCls}
                 />
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="font-mono text-[9px] text-[#4b5563]">
+                    Will become →
+                  </span>
+                  <StatusBadge status={preview} />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <button
@@ -476,7 +529,7 @@ export function StatusModal({
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 onClick={onClose}
-                className="py-2.5 rounded-xl border border-[#2a2d35] bg-transparent text-[#6b7280] cursor-pointer font-mono text-[10px] tracking-widest hover:border-[#374151] transition-colors"
+                className="py-2.5 rounded-xl border border-[#2a2d35] bg-transparent text-[#6b7280] cursor-pointer font-mono text-[10px] tracking-widest"
               >
                 CLOSE
               </button>
@@ -507,21 +560,22 @@ export function AddTaskModal({
   onAdd,
 }: {
   onClose: () => void;
-  onAdd: (t: Omit<Task, "id" | "done" | "doneAt">) => Promise<void>;
+  onAdd: (t: Omit<Task, "id" | "done" | "doneAt" | "status">) => Promise<void>;
 }) {
   const [form, setForm] = useState({
     title: "",
     tag: "Dev",
     priority: "Medium",
     dueDate: "",
+    notes: "",
   });
   const [loading, setLoading] = useState(false);
-  const inpCls =
+  const inp =
     "w-full bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-2 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#a3c47a] transition-colors";
   const submit = async () => {
     if (!form.title || !form.dueDate) return;
     setLoading(true);
-    await onAdd(form as Omit<Task, "id" | "done" | "doneAt">);
+    await onAdd(form as Omit<Task, "id" | "done" | "doneAt" | "status">);
     setLoading(false);
     onClose();
   };
@@ -542,13 +596,13 @@ export function AddTaskModal({
             placeholder="Task title…"
             value={form.title}
             onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-            className={inpCls}
+            className={inp}
           />
           <div className="grid grid-cols-2 gap-2.5">
             <select
               value={form.tag}
               onChange={(e) => setForm((p) => ({ ...p, tag: e.target.value }))}
-              className={inpCls}
+              className={inp}
             >
               {["Design", "Dev", "Docs", "Content", "Management"].map((t) => (
                 <option key={t}>{t}</option>
@@ -559,7 +613,7 @@ export function AddTaskModal({
               onChange={(e) =>
                 setForm((p) => ({ ...p, priority: e.target.value }))
               }
-              className={inpCls}
+              className={inp}
             >
               {["High", "Medium", "Low"].map((p) => (
                 <option key={p}>{p}</option>
@@ -572,20 +626,27 @@ export function AddTaskModal({
             onChange={(e) =>
               setForm((p) => ({ ...p, dueDate: e.target.value }))
             }
-            className={inpCls}
+            className={inp}
+          />
+          <textarea
+            placeholder="Notes (optional)…"
+            value={form.notes}
+            onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+            rows={3}
+            className={inp + " resize-none leading-relaxed"}
           />
         </div>
         <div className="grid grid-cols-2 gap-2.5 mt-5">
           <button
             onClick={onClose}
-            className="py-2.5 rounded-xl border border-[#2a2d35] bg-transparent text-[#6b7280] cursor-pointer font-mono text-[11px] hover:border-[#374151] transition-colors"
+            className="py-2.5 rounded-xl border border-[#2a2d35] bg-transparent text-[#6b7280] cursor-pointer font-mono text-[11px]"
           >
             CANCEL
           </button>
           <button
             onClick={submit}
             disabled={loading}
-            className="py-2.5 rounded-xl border-none bg-[#a3c47a] text-[#111] cursor-pointer font-mono text-[11px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+            className="py-2.5 rounded-xl border-none bg-[#a3c47a] text-[#111] cursor-pointer font-mono text-[11px] font-semibold disabled:opacity-60"
           >
             {loading ? "SAVING…" : "ADD TASK"}
           </button>

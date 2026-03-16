@@ -1,8 +1,7 @@
 "use client";
-import { useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+
 import { PRIORITY_COLOR, type Task } from "@/utilities/workspace/theme";
-import { dateKey, isoToKey } from "@/utilities/workspace/utility";
+import { dateKey, isoToKey, StatusStrip } from "@/utilities/workspace/utility";
 import {
   AnimatedBar,
   MiniCalendar,
@@ -11,7 +10,8 @@ import {
 } from "@/components/workspace/Elements";
 import { AddTaskModal, StatusModal } from "@/utilities/workspace/modal";
 
-const TODAY = new Date();
+import { useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // ── Main Dashboard ────────────────────────────────────
 export default function TaskDashboard({
@@ -20,7 +20,7 @@ export default function TaskDashboard({
   initialTasks: Task[];
 }) {
   const searchParams = useSearchParams();
-  const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "Done">(
     "All",
   );
@@ -30,16 +30,16 @@ export default function TaskDashboard({
   const initDateKey = (() => {
     const d = searchParams?.get("date");
     if (!d) return null;
-    const parsed = new Date(d + "T12:00:00");
-    return isNaN(parsed.getTime()) ? null : dateKey(parsed);
+    const p = new Date(d + "T12:00:00");
+    return isNaN(p.getTime()) ? null : dateKey(p);
   })();
   const initDateLabel = (() => {
     const d = searchParams?.get("date");
     if (!d) return "";
-    const parsed = new Date(d + "T12:00:00");
-    return isNaN(parsed.getTime())
+    const p = new Date(d + "T12:00:00");
+    return isNaN(p.getTime())
       ? ""
-      : parsed.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      : p.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   })();
 
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(
@@ -76,7 +76,11 @@ export default function TaskDashboard({
     }
   };
 
-  const handleAdd = async (data: Omit<Task, "id" | "done" | "doneAt">) => {
+  const handleAdd = async (
+    data: Omit<Task, "id" | "done" | "doneAt" | "status" | "notes"> & {
+      notes?: string;
+    },
+  ) => {
     const res = await fetch("/api/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -94,7 +98,7 @@ export default function TaskDashboard({
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#111214] px-4 py-6 sm:px-7 sm:py-8">
+    <div className="min-h-screen bg-[#111214] px-4 py-6 sm:px-7 sm:py-8 mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-7">
         <div>
@@ -110,7 +114,7 @@ export default function TaskDashboard({
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <span className="font-mono text-[11px] text-[#374151] hidden sm:block">
-            {TODAY.toLocaleDateString("en-US", {
+            {new Date().toLocaleDateString("en-US", {
               weekday: "long",
               month: "long",
               day: "numeric",
@@ -165,19 +169,9 @@ export default function TaskDashboard({
             </div>
             <div className="bg-[#16181d] rounded-2xl p-4 sm:p-5">
               <AnimatedBar pct={pct} />
-              <div className="flex gap-4 mt-4 flex-wrap">
-                {(["High", "Medium", "Low"] as const).map((p) => (
-                  <div key={p} className="flex items-center gap-1.5">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ background: PRIORITY_COLOR[p] }}
-                    />
-                    <span className="font-mono text-[11px] text-[#4b5563]">
-                      {tasks.filter((t) => t.priority === p && !t.done).length}{" "}
-                      {p.toLowerCase()}
-                    </span>
-                  </div>
-                ))}
+              {/* Status strip */}
+              <div className="mt-4">
+                <StatusStrip tasks={tasks} />
               </div>
             </div>
           </div>
@@ -237,15 +231,14 @@ export default function TaskDashboard({
         </div>
 
         <div className="bg-[#16181d] rounded-2xl overflow-hidden">
-          {/* Table header */}
-          <div className="hidden sm:flex gap-3 px-4 py-2.5 border-b border-[#1e2128]">
-            <span className="font-mono text-[10px] text-[#374151] tracking-widest w-17.5">
+          <div className="hidden sm:flex gap-2.5 px-4 py-2.5 border-b border-[#1e2128]">
+            <span className="font-mono text-[10px] text-[#374151] tracking-widest w-20.5">
               STATUS
             </span>
             <span className="font-mono text-[10px] text-[#374151] tracking-widest flex-1">
               TASK
             </span>
-            <span className="font-mono text-[10px] text-[#374151] tracking-widest w-28">
+            <span className="font-mono text-[10px] text-[#374151] tracking-widest w-32 hidden sm:block">
               DATE
             </span>
             <span className="font-mono text-[10px] text-[#374151] tracking-widest w-20">
@@ -269,6 +262,29 @@ export default function TaskDashboard({
                 : "No tasks here."}
             </div>
           )}
+        </div>
+
+        {/* Priority escalation legend */}
+        <div className="mt-3 flex items-center gap-4 flex-wrap px-1">
+          <span className="font-mono text-[9px] text-[#2a2d35] tracking-widest">
+            AUTO-PRIORITY:
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-[9px] text-[#fbbf24] bg-[#fbbf2418] border border-[#fbbf2433] px-1.5 py-0.5 rounded-full">
+              ↑ BUMPED
+            </span>
+            <span className="font-mono text-[9px] text-[#374151]">
+              due tomorrow → +1 level
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-[9px] text-[#f87171] bg-[#f8717118] border border-[#f8717133] px-1.5 py-0.5 rounded-full">
+              ↑ HIGH
+            </span>
+            <span className="font-mono text-[9px] text-[#374151]">
+              due today or past → High
+            </span>
+          </div>
         </div>
       </div>
 

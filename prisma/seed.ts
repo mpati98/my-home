@@ -9,14 +9,14 @@ async function main() {
 
   await prisma.task.createMany({
     data: [
-      { title: "Design system audit", tag: "Design", priority: "High", done: true, dueDate: new Date("2026-03-01") },
-      { title: "API integration for auth module", tag: "Dev", priority: "High", done: false, dueDate: new Date("2026-03-03") },
-      { title: "Write Q1 retrospective doc", tag: "Docs", priority: "Medium", done: false, dueDate: new Date("2026-03-05") },
-      { title: "Fix pagination bug on dashboard", tag: "Dev", priority: "High", done: true, dueDate: new Date("2026-03-02") },
-      { title: "Update onboarding flow copy", tag: "Content", priority: "Low", done: false, dueDate: new Date("2026-03-07") },
-      { title: "Stakeholder sync call prep", tag: "Management", priority: "Medium", done: false, dueDate: new Date("2026-03-04") },
-      { title: "Release v2.3 changelog", tag: "Docs", priority: "Low", done: true, dueDate: new Date("2026-03-01") },
-      { title: "Performance profiling home route", tag: "Dev", priority: "Medium", done: false, dueDate: new Date("2026-03-06") },
+      { title: "Design system audit", tag: "Adhoc", priority: "High", done: true, dueDate: new Date("2026-03-01") },
+      { title: "API integration for auth module", tag: "Adhoc", priority: "High", done: false, dueDate: new Date("2026-03-03") },
+      { title: "Write Q1 retrospective doc", tag: "Adhoc", priority: "Medium", done: false, dueDate: new Date("2026-03-05") },
+      { title: "Fix pagination bug on dashboard", tag: "Adhoc", priority: "High", done: true, dueDate: new Date("2026-03-02") },
+      { title: "Update onboarding flow copy", tag: "Adhoc", priority: "Low", done: false, dueDate: new Date("2026-03-07") },
+      { title: "Stakeholder sync call prep", tag: "Adhoc", priority: "Medium", done: false, dueDate: new Date("2026-03-04") },
+      { title: "Release v2.3 changelog", tag: "Adhoc", priority: "Low", done: true, dueDate: new Date("2026-03-01") },
+      { title: "Performance profiling home route", tag: "Adhoc", priority: "Medium", done: false, dueDate: new Date("2026-03-06") },
     ],
   });
 
