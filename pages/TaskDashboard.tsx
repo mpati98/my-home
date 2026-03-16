@@ -15,9 +15,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 // ── Main Dashboard ────────────────────────────────────
 export default function TaskDashboard({
-  initialTasks,
+  initialTasks = [],
 }: {
-  initialTasks: Task[];
+  initialTasks?: Task[];
 }) {
   const searchParams = useSearchParams();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
@@ -77,9 +77,7 @@ export default function TaskDashboard({
   };
 
   const handleAdd = async (
-    data: Omit<Task, "id" | "done" | "doneAt" | "status" | "notes"> & {
-      notes?: string;
-    },
+    data: Omit<Task, "id" | "done" | "doneAt" | "status">,
   ) => {
     const res = await fetch("/api/tasks", {
       method: "POST",

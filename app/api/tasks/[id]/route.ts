@@ -37,10 +37,11 @@ function serialize(t: any) {
   };
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await req.json();
-    const task = await prisma.task.findUnique({ where: { id: params.id } });
+    const task = await prisma.task.findUnique({ where: { id } });
     if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const data: Record<string, unknown> = {};
@@ -83,7 +84,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       }
     }
 
-    const updated = await prisma.task.update({ where: { id: params.id }, data });
+    const updated = await prisma.task.update({ where: { id }, data });
     return NextResponse.json(serialize(updated));
   } catch (e) {
     console.error(e);

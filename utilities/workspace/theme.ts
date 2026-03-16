@@ -5,7 +5,7 @@ export type Task = {
   tag: "Adhoc" | "Event" | "Fair" | "External" | "Data" | "Learning";
   priority: "High" | "Medium" | "Low";
   status: TaskStatus;
-  notes: string;
+  notes: string | null;
   done: boolean;
   dueDate: string;
   doneAt?: string | null;

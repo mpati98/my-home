@@ -1,4 +1,4 @@
-import { TaskStatus, STATUS_META } from "./theme";
+import { TaskStatus, STATUS_META, type Task } from "./theme";
 
 const TODAY = new Date();
 TODAY.setHours(0, 0, 0, 0);
