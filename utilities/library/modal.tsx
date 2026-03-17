@@ -113,7 +113,7 @@ export function SpineColorPicker({
           style={{
             background: color,
             outline:
-              value === color ? "2.5px solid " + INK : "2px solid transparent",
+              value === color ? "2.5px solid #e8e3d5" : "2px solid transparent",
             outlineOffset: 2,
           }}
         />

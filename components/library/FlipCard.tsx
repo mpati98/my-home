@@ -1,6 +1,13 @@
 "use client";
 
-import { CAT_ICON, GOLD, SEPIA, INK, RED } from "@/utilities/library/theme";
+import {
+  CAT_ICON,
+  GOLD,
+  SEPIA,
+  INK,
+  RED,
+  LIGHT,
+} from "@/utilities/library/theme";
 import { fmtMonth } from "@/utilities/library/utility";
 import { Card } from "@/utilities/library/theme";
 import { useState } from "react";
@@ -138,7 +145,7 @@ export default function FlipCard({
                 key={i}
                 className="font-[Cormorant_Garant,serif] text-sm leading-relaxed mb-2"
                 style={{
-                  color: line.startsWith("'") ? SEPIA : INK,
+                  color: line.startsWith("'") ? GOLD : LIGHT,
                   fontStyle: line.startsWith("'") ? "italic" : "normal",
                 }}
               >

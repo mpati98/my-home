@@ -24,6 +24,7 @@ export const INK = "#1a1612";
 export const SEPIA = "#7a6a56";
 export const GOLD  = "#c9a96e";
 export const RED = "#c0392b";
+export const LIGHT = "#F5E9D8";
 
 export const CAT_ICON: Record<CardCategory, string> = {
   Book: "◎",
