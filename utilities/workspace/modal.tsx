@@ -604,7 +604,7 @@ export function AddTaskModal({
               onChange={(e) => setForm((p) => ({ ...p, tag: e.target.value }))}
               className={inp}
             >
-              {["Design", "Dev", "Docs", "Content", "Management"].map((t) => (
+              {TAG_LIST.map((t) => (
                 <option key={t}>{t}</option>
               ))}
             </select>

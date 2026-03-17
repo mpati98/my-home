@@ -1,95 +1,68 @@
-# Workspace — Next.js + Prisma + PostgreSQL
+# Workspace
 
-Personal workspace with Tasks, Calendar, Library, Collection, and Daily Learn.
+A full-stack personal workspace application for task management, learning, library organization, and daily productivity.
+
+**Tech Stack:** Next.js 15 • TypeScript • Tailwind CSS • Prisma • PostgreSQL • Node.js 20
 
 ---
 
-## 🐳 Run with Docker (recommended)
+## ✨ Features
 
-### Prerequisites
+- **Task Manager** — Create, organize, and track tasks by priority, status, and due date
+- **Calendar View** — Visual task planning with monthly calendar overview
+- **Daily Learn** — Build vocabulary with daily word cards and examples
+- **Library** — Manage flip cards for learning (books, experiences, collections)
+- **Collection** — Organize content by topics with nested sub-items
+- **REST API** — Full CRUD endpoints for all resources
+- **Responsive Design** — Works on desktop, tablet, and mobile
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
+---
 
-### 1. Clone / unzip the project
+## 🚀 Quick Start
+
+### Option 1: Docker (Recommended)
 
 ```bash
-cd my-app
-```
+# Install Docker Desktop if you don't have it
+# https://www.docker.com/products/docker-desktop
 
-### 2. Start everything
-
-```bash
+# Start everything (build + database + app)
 docker compose up --build
 ```
 
-Docker will:
+The app will be available at **http://localhost:8080** after ~30 seconds.
 
-1. Pull `postgres:16-alpine`
-2. Build the Next.js app image
-3. Wait for PostgreSQL to be healthy
-4. Run database migrations automatically
-5. Seed the database with sample data
-6. Start the app on **http://localhost:3000**
+Docker will automatically:
 
-### 3. Open the app
+- Pull and run PostgreSQL 16
+- Build the Next.js app image
+- Run database migrations
+- Seed sample data
+- Start the application
 
-```
-http://localhost:3000
-```
+> **Note:** If you get a port conflict on 5432 (PostgreSQL), ensure no local PostgreSQL is running, or modify the port mapping in `docker-compose.yml`.
 
----
+### Option 2: Local Development
 
-## 🔧 Docker commands
-
-| Command                                              | Description                     |
-| ---------------------------------------------------- | ------------------------------- |
-| `docker compose up --build`                          | First run — build image + start |
-| `docker compose up`                                  | Start (image already built)     |
-| `docker compose up -d`                               | Start in background             |
-| `docker compose down`                                | Stop containers                 |
-| `docker compose down -v`                             | Stop + delete database volume   |
-| `docker compose logs -f app`                         | Stream app logs                 |
-| `docker compose logs -f db`                          | Stream database logs            |
-| `docker compose exec app sh`                         | Shell into app container        |
-| `docker compose exec db psql -U workspace workspace` | Open psql                       |
-
----
-
-## ⚙️ Configuration
-
-Edit `.env` to change credentials:
-
-```env
-POSTGRES_USER=workspace
-POSTGRES_PASSWORD=workspace_pass
-POSTGRES_DB=workspace
-```
-
-The `DATABASE_URL` is built automatically inside `docker-compose.yml`.
-
----
-
-## 💻 Local development (without Docker)
-
-### Prerequisites
+**Prerequisites:**
 
 - Node.js 20+
-- PostgreSQL running locally (or use `docker compose up db` to run just the database)
+- PostgreSQL 14+ running locally, OR Docker for database only
 
-### Setup
+**Setup:**
 
 ```bash
 # Install dependencies
 npm install
 
-# Copy env
-cp .env.local .env.local   # Already set to localhost:5432
+# Generate Prisma client
+npx prisma generate
 
-# Push schema + generate client
+# Create database schema
 npx prisma db push
 
-# Seed
-npm run db:seed
+# Seed sample data
+npx prisma db seed
 
 # Start dev server
 npm run dev
@@ -97,62 +70,242 @@ npm run dev
 
 App runs at **http://localhost:3000**
 
-### To run only the database in Docker (for local dev):
+**To use Docker for just the database:**
 
 ```bash
 docker compose up db -d
-```
-
-Then run `npm run dev` locally — it connects to `localhost:5432`.
-
----
-
-## 📁 Project structure
-
-```
-my-app/
-├── src/
-│   ├── app/              # Next.js App Router pages + API routes
-│   │   ├── api/          # REST API endpoints
-│   │   ├── calendar/     # Calendar page
-│   │   ├── collection/   # Collection page
-│   │   ├── learn/        # Daily Learn page
-│   │   └── library/      # Library page
-│   └── components/       # React components
-├── prisma/
-│   ├── schema.prisma     # Database schema
-│   ├── seed.ts           # Seed data (100 learn words + sample cards)
-│   └── migrations/       # SQL migrations
-├── public/               # Static assets (logo.png)
-├── Dockerfile
-├── docker-compose.yml
-├── entrypoint.sh         # Migration + seed + start
-└── next.config.ts
+npm run dev
 ```
 
 ---
 
-## 🗄️ Database schema
-
-| Model       | Description                                            |
-| ----------- | ------------------------------------------------------ |
-| `Task`      | Tasks with priority, status, due date                  |
-| `Card`      | Library flip cards (Book / Experience / Collection)    |
-| `Topic`     | Collection topics with sub-cards                       |
-| `SubCard`   | Cards nested under a topic                             |
-| `LearnWord` | Daily vocabulary — word, meaning, examples, references |
-
----
-
-## 🔄 Re-seed the database
+## 📋 Available Scripts
 
 ```bash
-docker compose exec app npm run db:seed
+npm run dev              # Start development server (port 3000)
+npm run build            # Build for production
+npm run start            # Start production server
+npm run lint             # Run ESLint
+npm run type-check       # Run TypeScript type checking
+npm run db:push          # Push schema to database
+npm run db:seed          # Seed database with sample data
+npm run db:migrate       # Run pending migrations
 ```
 
-## 🗑️ Reset everything
+---
+
+## 🐳 Docker Commands Reference
+
+| Command                                              | Description                                      |
+| ---------------------------------------------------- | ------------------------------------------------ |
+| `docker compose up --build`                          | First run — builds image and starts all services |
+| `docker compose up`                                  | Start services (image must be pre-built)         |
+| `docker compose up -d`                               | Start in background                              |
+| `docker compose down`                                | Stop all services                                |
+| `docker compose down -v`                             | Stop services and delete database volume         |
+| `docker compose logs -f app`                         | Stream application logs                          |
+| `docker compose logs -f db`                          | Stream database logs                             |
+| `docker compose ps`                                  | List running containers                          |
+| `docker compose exec app sh`                         | Shell into the app container                     |
+| `docker compose exec db psql -U workspace workspace` | Connect to PostgreSQL                            |
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+Database credentials can be customized in `.env`:
+
+```env
+POSTGRES_USER=workspace
+POSTGRES_PASSWORD=workspace_pass
+POSTGRES_DB=workspace
+```
+
+Or pass them to `docker compose`:
 
 ```bash
-docker compose down -v   # removes the postgres_data volume
+POSTGRES_PASSWORD=mypass docker compose up
+```
+
+The `DATABASE_URL` is automatically generated from these values.
+
+### Ports
+
+- **Web App:** `http://localhost:8080` (Docker) or `http://localhost:3000` (local)
+- **PostgreSQL:** `localhost:5433` (Docker) or `localhost:5432` (local)
+
+---
+
+## 📁 Project Structure
+
+```
+.
+├── app/                      # Next.js App Router
+│   ├── api/                  # REST API routes
+│   │   ├── cards/            # Card management endpoints
+│   │   ├── tasks/            # Task management endpoints
+│   │   ├── topics/           # Topic endpoints
+│   │   ├── subcards/         # SubCard endpoints
+│   │   └── learn/            # Learn/vocabulary endpoints
+│   ├── about/                # About page
+│   ├── collection/           # Collection page
+│   ├── learn/                # Daily learning page
+│   ├── library/              # Library page
+│   ├── task/                 # Task dashboard page
+│   └── layout.tsx            # Root layout
+├── components/               # React components
+│   ├── collection/           # Collection components
+│   ├── images/               # Image gallery components
+│   ├── learn/                # Learning components
+│   ├── library/              # Library components
+│   ├── main/                 # Navigation components
+│   └── workspace/            # Workspace/task components
+├── lib/                      # Utility libraries
+│   └── prisma.ts             # Prisma client
+├── pages/                    # Legacy page components
+├── prisma/                   # Database
+│   ├── schema.prisma         # Database schema
+│   ├── seed.ts               # Seed script
+│   ├── seedNewWords.ts       # Vocabulary data
+│   └── migrations/           # Database migrations
+├── public/                   # Static assets
+├── utilities/                # UI utilities and themes
+│   ├── collection/           # Collection styling
+│   ├── learn/                # Learn utilities
+│   ├── library/              # Library utilities
+│   ├── main/                 # Main utilities
+│   └── workspace/            # Task/workspace utilities
+├── Dockerfile                # Container build configuration
+├── docker-compose.yml        # Multi-container setup
+├── entrypoint.sh             # Container startup script
+├── next.config.ts            # Next.js configuration
+├── tailwind.config.ts        # Tailwind CSS configuration
+├── tsconfig.json             # TypeScript configuration
+└── package.json              # Dependencies and scripts
+```
+
+---
+
+## 🗄️ Database Schema
+
+### Core Models
+
+| Model       | Purpose                 | Key Fields                                                     |
+| ----------- | ----------------------- | -------------------------------------------------------------- |
+| `Task`      | Task management         | id, title, tag, priority, status, dueDate, notes, done, doneAt |
+| `Card`      | Flip cards for learning | id, front, back, type, isPublic, userId                        |
+| `Topic`     | Collection organization | id, name, description                                          |
+| `SubCard`   | Cards within topics     | id, content, topicId                                           |
+| `LearnWord` | Daily vocabulary        | id, word, meaning, examples, references, difficulty            |
+
+### Relationships
+
+- Task → many (standalone)
+- Card → many users (library)
+- Topic → many SubCards
+- LearnWord → daily learning
+
+---
+
+## 🔄 Common Workflows
+
+### Reset Database
+
+```bash
+# Remove all data and recreate schema
+docker compose down -v
 docker compose up --build
 ```
+
+### Re-seed Data
+
+```bash
+# Clear and re-seed while keeping containers running
+docker compose exec app npx prisma db seed
+```
+
+### Access Database
+
+```bash
+# Connect to PostgreSQL
+docker compose exec db psql -U workspace workspace
+```
+
+### Rebuild App
+
+```bash
+# Rebuild Next.js app without restarting database
+docker compose up --build app
+```
+
+### View Logs
+
+```bash
+# Real-time logs from all services
+docker compose logs -f
+
+# Or specific service
+docker compose logs -f app
+docker compose logs -f db
+```
+
+---
+
+## 🛠️ Troubleshooting
+
+### Port Already in Use
+
+If you get "port already in use" errors:
+
+```bash
+# Find what's using the port
+sudo lsof -i :5432    # PostgreSQL
+sudo lsof -i :8080    # Web app
+
+# Stop existing services
+docker compose down
+```
+
+Modify `docker-compose.yml` to use different ports if needed.
+
+### Database Connection Failed
+
+1. Ensure PostgreSQL is healthy: `docker compose logs db`
+2. Check DATABASE_URL in container: `docker compose exec app env | grep DATABASE_URL`
+3. Verify database exists: `docker compose exec db psql -U workspace -l`
+
+### Build Fails
+
+```bash
+# Clean rebuild everything
+docker compose down -v
+docker system prune -a
+docker compose up --build
+```
+
+### TypeScript Errors
+
+```bash
+# Regenerate Prisma client
+npx prisma generate
+
+# Type check
+npm run type-check
+```
+
+---
+
+## 📚 Additional Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [PostgreSQL](https://www.postgresql.org/docs)
+
+---
+
+## 📝 License
+
+Personal project
