@@ -95,9 +95,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await prisma.card.delete({ where: { id } });
+    await prisma.task.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json({ error: "Failed to delete card" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete task" }, { status: 500 });
   }
 }

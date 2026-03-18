@@ -111,7 +111,10 @@ export default function TaskDashboard({
           </h1>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-mono text-[11px] text-[#374151] hidden sm:block">
+          <span
+            className="font-mono text-[11px] text-[#374151] hidden sm:block"
+            suppressHydrationWarning
+          >
             {new Date().toLocaleDateString("en-US", {
               weekday: "long",
               month: "long",

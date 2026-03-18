@@ -564,8 +564,8 @@ export function AddTaskModal({
 }) {
   const [form, setForm] = useState({
     title: "",
-    tag: "Dev",
-    priority: "Medium",
+    tag: "Adhoc",
+    priority: "Low",
     dueDate: "",
     notes: "",
   });
