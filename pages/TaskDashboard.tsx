@@ -16,8 +16,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 // ── Main Dashboard ────────────────────────────────────
 export default function TaskDashboard({
   initialTasks = [],
+  initialProjects = [],
 }: {
   initialTasks?: Task[];
+  initialProjects?: { id: string; name: string; color: string }[];
 }) {
   const searchParams = useSearchParams();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
@@ -26,6 +28,15 @@ export default function TaskDashboard({
   );
   const [, startTransition] = useTransition();
   const router = useRouter();
+
+  // Create projectsMap from initialProjects
+  const projectsMap: Record<
+    string,
+    { id: string; name: string; color: string }
+  > = {};
+  initialProjects.forEach((p) => {
+    projectsMap[p.id] = p;
+  });
 
   const initDateKey = (() => {
     const d = searchParams?.get("date");
@@ -76,9 +87,14 @@ export default function TaskDashboard({
     }
   };
 
-  const handleAdd = async (
-    data: Omit<Task, "id" | "done" | "doneAt" | "status">,
-  ) => {
+  const handleAdd = async (data: {
+    title: string;
+    tag: string;
+    priority: string;
+    dueDate: string;
+    notes: string;
+    projectId?: string | null;
+  }) => {
     const res = await fetch("/api/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -254,6 +270,7 @@ export default function TaskDashboard({
                 task={task}
                 onOpenStatus={(t) => setStatusTask(t)}
                 onDelete={handleDelete}
+                projectsMap={projectsMap}
               />
             ))
           ) : (

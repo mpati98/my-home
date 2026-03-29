@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Task, TaskStatus } from "./theme";
+import type { Props, Task, TaskForm, TaskStatus } from "./theme";
 import {
   TAG_COLOR,
   PRIORITY_COLOR,
@@ -8,6 +8,7 @@ import {
   STATUS_META,
 } from "./theme";
 import { fmtDate, fmtDateTime, StatusBadge, toInputDate } from "./utility";
+import { INP } from "../collection/theme";
 
 // ── Task Edit Modal ───────────────────────────────────
 export function TaskModal({
@@ -558,98 +559,143 @@ export function StatusModal({
 export function AddTaskModal({
   onClose,
   onAdd,
-}: {
-  onClose: () => void;
-  onAdd: (t: Omit<Task, "id" | "done" | "doneAt" | "status">) => Promise<void>;
-}) {
-  const [form, setForm] = useState({
+  projectId,
+  accentColor = "#a3c47a",
+  projectName,
+}: Props) {
+  const [form, setForm] = useState<TaskForm>({
     title: "",
     tag: "Adhoc",
-    priority: "Low",
+    priority: "Medium",
     dueDate: "",
     notes: "",
+    projectId: projectId ?? null,
   });
   const [loading, setLoading] = useState(false);
-  const inp =
-    "w-full bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-2 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#a3c47a] transition-colors";
-  const submit = async () => {
+
+  const focusCls = `focus:border-[${accentColor}]`;
+  const inp = `${INP} focus:border-[${accentColor}]`;
+
+  async function submit() {
     if (!form.title || !form.dueDate) return;
     setLoading(true);
-    await onAdd(form as Omit<Task, "id" | "done" | "doneAt" | "status">);
+    await onAdd(form);
     setLoading(false);
     onClose();
-  };
+  }
+
   return (
     <div
       className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="bg-[#16181d] rounded-2xl p-6 sm:p-7 w-full max-w-sm border border-[#2a2d35] shadow-2xl"
+        className="bg-[#16181d] rounded-2xl w-full max-w-sm border border-[#2a2d35] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="font-mono text-[11px] text-[#a3c47a] tracking-widest mb-5">
-          NEW TASK
-        </div>
-        <div className="flex flex-col gap-3">
-          <input
-            placeholder="Task title…"
-            value={form.title}
-            onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-            className={inp}
-          />
-          <div className="grid grid-cols-2 gap-2.5">
-            <select
-              value={form.tag}
-              onChange={(e) => setForm((p) => ({ ...p, tag: e.target.value }))}
-              className={inp}
+        {/* Accent top bar */}
+        <div className="h-1" style={{ background: accentColor }} />
+
+        <div className="p-6 sm:p-7">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-5">
+            <div>
+              <div
+                className="font-mono text-[11px] tracking-widest"
+                style={{ color: accentColor }}
+              >
+                NEW TASK
+              </div>
+              {projectName && (
+                <div className="font-mono text-[10px] text-[#4b5563] mt-0.5">
+                  in {projectName}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="bg-transparent border-none text-[#4b5563] cursor-pointer text-xl leading-none hover:text-[#9ca3af] transition-colors"
             >
-              {TAG_LIST.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-            <select
-              value={form.priority}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, priority: e.target.value }))
-              }
-              className={inp}
-            >
-              {["High", "Medium", "Low"].map((p) => (
-                <option key={p}>{p}</option>
-              ))}
-            </select>
+              ×
+            </button>
           </div>
-          <input
-            type="date"
-            value={form.dueDate}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, dueDate: e.target.value }))
-            }
-            className={inp}
-          />
-          <textarea
-            placeholder="Notes (optional)…"
-            value={form.notes}
-            onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-            rows={3}
-            className={inp + " resize-none leading-relaxed"}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-2.5 mt-5">
-          <button
-            onClick={onClose}
-            className="py-2.5 rounded-xl border border-[#2a2d35] bg-transparent text-[#6b7280] cursor-pointer font-mono text-[11px]"
-          >
-            CANCEL
-          </button>
-          <button
-            onClick={submit}
-            disabled={loading}
-            className="py-2.5 rounded-xl border-none bg-[#a3c47a] text-[#111] cursor-pointer font-mono text-[11px] font-semibold disabled:opacity-60"
-          >
-            {loading ? "SAVING…" : "ADD TASK"}
-          </button>
+
+          {/* Fields */}
+          <div className="flex flex-col gap-3">
+            <input
+              placeholder="Task title…"
+              value={form.title}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, title: e.target.value }))
+              }
+              className={INP}
+              style={{ borderColor: form.title ? "#2a2d35" : undefined }}
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && submit()}
+            />
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <select
+                value={form.tag}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, tag: e.target.value }))
+                }
+                className={INP}
+              >
+                {TAG_LIST.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+              <select
+                value={form.priority}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, priority: e.target.value }))
+                }
+                className={INP}
+              >
+                {["High", "Medium", "Low"].map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+
+            <input
+              type="date"
+              value={form.dueDate}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, dueDate: e.target.value }))
+              }
+              className={INP}
+            />
+
+            <textarea
+              placeholder="Notes (optional)…"
+              value={form.notes}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, notes: e.target.value }))
+              }
+              rows={3}
+              className={`${INP} resize-none leading-relaxed`}
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="grid grid-cols-2 gap-2.5 mt-5">
+            <button
+              onClick={onClose}
+              className="py-2.5 rounded-xl border border-[#2a2d35] bg-transparent text-[#6b7280] cursor-pointer font-mono text-[11px] tracking-wide hover:border-[#374151] transition-colors"
+            >
+              CANCEL
+            </button>
+            <button
+              onClick={submit}
+              disabled={loading || !form.title || !form.dueDate}
+              className="py-2.5 rounded-xl border-none cursor-pointer font-mono text-[11px] font-semibold text-[#111] hover:opacity-90 transition-opacity disabled:opacity-50"
+              style={{ background: accentColor }}
+            >
+              {loading ? "SAVING…" : "ADD TASK"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

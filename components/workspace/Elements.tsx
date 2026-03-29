@@ -253,10 +253,12 @@ export function TaskRow({
   task,
   onOpenStatus,
   onDelete,
+  projectsMap,
 }: {
   task: Task;
   onOpenStatus: (t: Task) => void;
   onDelete: (id: string) => void;
+  projectsMap?: Record<string, { id: string; name: string; color: string }>;
 }) {
   const [hov, setHov] = useState(false);
   const tag = TAG_COLOR[task.tag];
@@ -335,6 +337,20 @@ export function TaskRow({
           className="font-mono text-[9px] text-[#4b5563] bg-[#1a1d24] border border-[#2a2d35] px-1.5 py-0.5 rounded-full shrink-0 hidden sm:block cursor-default"
         >
           ✎
+        </span>
+      )}
+      {/* Project badge */}
+      {task.projectId && projectsMap?.[task.projectId] && (
+        <span
+          title={`Project: ${projectsMap[task.projectId].name}`}
+          className="font-mono text-[9px] px-2 py-0.5 rounded-full shrink-0 hidden sm:inline whitespace-nowrap max-w-25 truncate"
+          style={{
+            background: projectsMap[task.projectId].color + "22",
+            color: projectsMap[task.projectId].color,
+            border: `1px solid ${projectsMap[task.projectId].color}55`,
+          }}
+        >
+          {projectsMap[task.projectId].name}
         </span>
       )}
       {/* Priority dot */}

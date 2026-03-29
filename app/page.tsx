@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const tasks = await prisma.task.findMany({ orderBy: { dueDate: "asc" } });
-  const serialized = tasks.map((t) => ({
+  const serialized = tasks.map((t: any) => ({
     ...t,
     dueDate: t.dueDate.toISOString(),
     createdAt: t.createdAt.toISOString(),

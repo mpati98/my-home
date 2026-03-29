@@ -18,7 +18,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     ...topic,
     createdAt: topic.createdAt.toISOString(),
     updatedAt: topic.updatedAt.toISOString(),
-    subCards: topic.subCards.map(s => ({
+    subCards: topic.subCards.map((s: any) => ({
       ...s, createdAt: s.createdAt.toISOString(), updatedAt: s.updatedAt.toISOString(),
     })),
   });

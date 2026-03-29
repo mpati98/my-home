@@ -6,11 +6,11 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
     include: { subCards: { orderBy: { createdAt: "asc" } } },
   });
-  return NextResponse.json(topics.map(t => ({
+  return NextResponse.json(topics.map((t: any) => ({
     ...t,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
-    subCards: t.subCards.map(s => ({
+    subCards: t.subCards.map((s: any) => ({
       ...s,
       createdAt: s.createdAt.toISOString(),
       updatedAt: s.updatedAt.toISOString(),

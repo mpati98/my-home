@@ -80,7 +80,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, tag, priority, dueDate, notes } = body;
+    const { title, tag, priority, dueDate, notes, projectId } = body;
     if (!title || !tag || !priority || !dueDate)
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 
@@ -94,7 +94,8 @@ export async function POST(request: Request) {
         priority: initPrio,
         status:   initStatus,
         dueDate:  dueDateObj,
-        ...(notes ? { notes } : {}),
+        ...(notes     ? { notes }                : {}),
+        ...(projectId ? { projectId }            : {}),
       },
     });
     return NextResponse.json(serialize(task), { status: 201 });

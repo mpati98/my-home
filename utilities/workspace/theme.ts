@@ -1,6 +1,6 @@
 export type Task = {
-
   id: string;
+  projectId?: string | null;
   title: string;
   tag: "Adhoc" | "Event" | "Fair" | "External" | "Data" | "Learning";
   priority: "High" | "Medium" | "Low";
@@ -8,9 +8,32 @@ export type Task = {
   notes: string | null;
   done: boolean;
   dueDate: string;
-  doneAt?: string | null;
+  doneAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
+
 export type TaskStatus = "waiting" | "processing" | "on_time" | "over_due";
+
+export type TaskForm = {
+  title: string;
+  tag: string;
+  priority: string;
+  dueDate: string;
+  notes: string;
+  projectId?: string | null;
+};
+
+export type Props = {
+  onClose: () => void;
+  onAdd: (t: TaskForm) => Promise<void>;
+  /** Pre-bind a project — hides the projectId from the UI */
+  projectId?: string;
+  /** Accent color for the header label (defaults to sage green) */
+  accentColor?: string;
+  /** Optional label shown above the modal title */
+  projectName?: string;
+};
 
 export const PRIORITY_COLOR: Record<string, string> = {
   High: "#f87171",

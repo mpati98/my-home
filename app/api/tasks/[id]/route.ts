@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Priority, TaskTag, TaskStatus } from "@prisma/client";
 
@@ -37,11 +37,11 @@ function serialize(t: any) {
   };
 }
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: NextRequest, context: any) {
+  const { params } = context;
   try {
-    const { id } = await params;
     const body = await req.json();
-    const task = await prisma.task.findUnique({ where: { id } });
+    const task = await prisma.task.findUnique({ where: { id: params.id } });
     if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const data: Record<string, unknown> = {};
@@ -84,7 +84,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
     }
 
-    const updated = await prisma.task.update({ where: { id }, data });
+    const updated = await prisma.task.update({ where: { id: params.id }, data });
     return NextResponse.json(serialize(updated));
   } catch (e) {
     console.error(e);
@@ -92,12 +92,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, context: any) {
+  const { params } = context;
   try {
-    const { id } = await params;
-    await prisma.task.delete({ where: { id } });
+    await prisma.task.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json({ error: "Failed to delete task" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }
