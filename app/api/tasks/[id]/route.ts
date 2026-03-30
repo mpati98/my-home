@@ -38,9 +38,16 @@ function serialize(t: any) {
 }
 
 export async function PATCH(req: NextRequest, context: any) {
-  const { params } = context;
+  const params = await context.params;
   try {
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      console.error("Failed to parse request body:", e);
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+
     const task = await prisma.task.findUnique({ where: { id: params.id } });
     if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -87,13 +94,13 @@ export async function PATCH(req: NextRequest, context: any) {
     const updated = await prisma.task.update({ where: { id: params.id }, data });
     return NextResponse.json(serialize(updated));
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+    console.error("Task PATCH error:", e);
+    return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest, context: any) {
-  const { params } = context;
+  const params = await context.params;
   try {
     await prisma.task.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });

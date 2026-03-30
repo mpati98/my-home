@@ -1,7 +1,11 @@
 import { TaskStatus, STATUS_META, type Task } from "./theme";
 
-const TODAY = new Date();
-TODAY.setHours(0, 0, 0, 0);
+// Get today's date at midnight - calculated dynamically to avoid hydration mismatches
+function getTodayMidnight(): Date {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
 
 // ── dateKey: canonical "YYYY-M-D" for comparison ──────
 export function dateKey(date: Date): string {
@@ -36,7 +40,7 @@ export function fmtDate(iso: string) {
 export function dueDateDiff(iso: string): number {
   const due = new Date(iso);
   due.setHours(0, 0, 0, 0);
-  return Math.round((due.getTime() - TODAY.getTime()) / 86400000);
+  return Math.round((due.getTime() - getTodayMidnight().getTime()) / 86400000);
 }
 
 export function toInputDate(iso: string) {

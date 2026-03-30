@@ -1,11 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Task } from "@/utilities/workspace/theme";
 import { isoToYMD, toYMD } from "@/utilities/workspace/utility";
 import { PRIORITY_COLOR } from "@/utilities/workspace/theme";
 import { DayCell } from "./TaskCard";
 import { TaskModal } from "@/utilities/workspace/modal";
-const TODAY = new Date();
 
 // ── Calendar Page ─────────────────────────────────────
 export default function CalendarView({
@@ -14,13 +13,25 @@ export default function CalendarView({
   initialTasks: Task[];
 }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [view, setView] = useState(
-    new Date(TODAY.getFullYear(), TODAY.getMonth(), 1),
-  );
+  const [mounted, setMounted] = useState(false);
+  const [today, setToday] = useState<Date | null>(null);
+  const [view, setView] = useState<Date | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<
     "All" | "High" | "Medium" | "Low"
   >("All");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // Initialize on client only to avoid hydration mismatch
+  useEffect(() => {
+    const today = new Date();
+    setToday(today);
+    setView(new Date(today.getFullYear(), today.getMonth(), 1));
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !today || !view) {
+    return null; // Don't render until mounted on client
+  }
 
   const yr = view.getFullYear();
   const mo = view.getMonth();
@@ -155,7 +166,7 @@ export default function CalendarView({
             </button>
             <button
               onClick={() =>
-                setView(new Date(TODAY.getFullYear(), TODAY.getMonth(), 1))
+                setView(new Date(today.getFullYear(), today.getMonth(), 1))
               }
               className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg border border-[#1e2128] bg-[#16181d] cursor-pointer font-mono text-[10px] text-[#6b7280] hover:text-[#9ca3af] transition-colors"
             >
@@ -191,7 +202,7 @@ export default function CalendarView({
             key={i}
             day={day}
             tasks={tasksByDay.get(toYMD(day)) ?? []}
-            isToday={toYMD(day) === toYMD(TODAY)}
+            isToday={toYMD(day) === toYMD(today)}
             isCurrentMonth={day.getMonth() === mo}
             onTaskClick={handleTaskClick}
           />

@@ -31,44 +31,69 @@ export function TaskModal({
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const inpCls =
     "w-full bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-2 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#a3c47a] transition-colors";
 
   async function handleSave() {
     setSaving(true);
-    const res = await fetch(`/api/tasks/${task.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: form.title,
-        tag: form.tag,
-        priority: form.priority,
-        dueDate: form.dueDate,
-      }),
-    });
-    if (res.ok) {
-      const updated: Task = await res.json();
-      onUpdate(task.id, updated);
-      onClose();
+    setError(null);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title,
+          tag: form.tag,
+          priority: form.priority,
+          dueDate: form.dueDate,
+        }),
+      });
+      if (res.ok) {
+        const updated: Task = await res.json();
+        onUpdate(task.id, updated);
+        onClose();
+      } else {
+        const errorData = await res
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        setError(errorData.error || `Update failed (${res.status})`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save task");
+      console.error("Task update error:", err);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function handleToggleStatus() {
     setToggling(true);
-    const newDone = !task.done;
-    const res = await fetch(`/api/tasks/${task.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ done: newDone }),
-    });
-    if (res.ok) {
-      const updated: Task = await res.json();
-      onUpdate(task.id, updated);
+    setError(null);
+    try {
+      const newDone = !task.done;
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: newDone }),
+      });
+      if (res.ok) {
+        const updated: Task = await res.json();
+        onUpdate(task.id, updated);
+        onClose();
+      } else {
+        const errorData = await res
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        setError(errorData.error || `Status update failed (${res.status})`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update status");
+      console.error("Toggle status error:", err);
+    } finally {
+      setToggling(false);
     }
-    setToggling(false);
-    onClose();
   }
 
   async function handleDelete() {
@@ -136,6 +161,13 @@ export function TaskModal({
               ×
             </button>
           </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="bg-[#f87171]/10 border border-[#f87171] rounded-lg px-3 py-2 mb-5">
+              <p className="font-mono text-[10px] text-[#f87171]">{error}</p>
+            </div>
+          )}
 
           {/* Form fields */}
           <div className="flex flex-col gap-3 mb-5">

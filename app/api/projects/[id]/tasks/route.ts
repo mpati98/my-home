@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 // PATCH /api/projects/[id]/tasks — assign or unassign a task
 export async function PATCH(req: NextRequest, context: any) {
-  const { params } = context;
+  const params = await context.params;
   const { taskId, assign } = await req.json();
   const task = await prisma.task.update({
     where: { id: taskId },

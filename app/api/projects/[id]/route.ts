@@ -20,7 +20,7 @@ function ser(p: any) {
 }
 
 export async function PATCH(req: NextRequest, context: any) {
-  const { params } = context;
+  const params = await context.params;
   const body = await req.json();
   const project = await prisma.project.update({
     where: { id: params.id },
@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest, context: any) {
 }
 
 export async function DELETE(req: NextRequest, context: any) {
-  const { params } = context;
+  const params = await context.params;
   // Detach tasks then delete
   await prisma.task.updateMany({ where: { projectId: params.id }, data: { projectId: null } });
   await prisma.project.delete({ where: { id: params.id } });
