@@ -59,6 +59,9 @@ export default function TaskDashboard({
   const [selectedDateLabel, setSelectedDateLabel] =
     useState<string>(initDateLabel);
   const [showAdd, setShowAdd] = useState(false);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [showDateRange, setShowDateRange] = useState(false);
   const [statusTask, setStatusTask] = useState<Task | null>(null);
 
   const total = tasks.length;
@@ -71,6 +74,19 @@ export default function TaskDashboard({
     if (statusFilter === "Pending" && t.done) return false;
     if (selectedDateKey && isoToKey(t.dueDate) !== selectedDateKey)
       return false;
+    // Date range filter (applied on dueDate)
+    if (dateFrom) {
+      const due = new Date(t.dueDate);
+      due.setHours(0, 0, 0, 0);
+      const from = new Date(dateFrom + "T00:00:00");
+      if (due < from) return false;
+    }
+    if (dateTo) {
+      const due = new Date(t.dueDate);
+      due.setHours(0, 0, 0, 0);
+      const to = new Date(dateTo + "T23:59:59");
+      if (due > to) return false;
+    }
     return true;
   });
 
@@ -230,6 +246,41 @@ export default function TaskDashboard({
               </button>
             </div>
           )}
+          {/* Date range active badge */}
+          {(dateFrom || dateTo) && (
+            <div className="flex items-center gap-1.5 bg-[#60a5fa18] border border-[#60a5fa44] rounded-full px-3 py-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#60a5fa]" />
+              <span className="font-mono text-[10px] text-[#60a5fa] tracking-wide">
+                {dateFrom ? dateFrom.slice(5) : "—"} →{" "}
+                {dateTo ? dateTo.slice(5) : "—"}
+              </span>
+              <button
+                onClick={() => {
+                  setDateFrom("");
+                  setDateTo("");
+                  setShowDateRange(false);
+                }}
+                className="bg-transparent border-none text-[#60a5fa] cursor-pointer text-sm leading-none pl-0.5 hover:opacity-70"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Date range toggle button */}
+          <button
+            onClick={() => setShowDateRange((s) => !s)}
+            className="font-mono text-[10px] px-3 py-1.5 rounded-full border cursor-pointer tracking-wide transition-all duration-200"
+            style={{
+              background: showDateRange ? "#60a5fa22" : "#1a1d24",
+              borderColor: showDateRange ? "#60a5fa66" : "#2a2d35",
+              color: showDateRange ? "#60a5fa" : "#4b5563",
+            }}
+          >
+            ⊞ DATE RANGE
+          </button>
+
+          {/* Status tabs */}
           <div className="flex gap-1">
             {(["All", "Pending", "Done"] as const).map((f) => (
               <button
@@ -246,6 +297,128 @@ export default function TaskDashboard({
             ))}
           </div>
         </div>
+        {/* Date range inputs */}
+        {showDateRange && (
+          <div className="flex items-center gap-2.5 mb-3 p-3 bg-[#16181d] rounded-xl border border-[#2a2d35] flex-wrap">
+            <span className="font-mono text-[10px] text-[#4b5563] tracking-widest shrink-0">
+              DUE DATE RANGE
+            </span>
+            <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
+              <div className="flex items-center gap-2 flex-1 min-w-45">
+                <span className="font-mono text-[10px] text-[#374151] shrink-0">
+                  FROM
+                </span>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  max={dateTo || undefined}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="flex-1 bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-1.5 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#60a5fa] transition-colors"
+                />
+              </div>
+              <div className="flex items-center gap-2 flex-1 min-w-45">
+                <span className="font-mono text-[10px] text-[#374151] shrink-0">
+                  TO
+                </span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom || undefined}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="flex-1 bg-[#1a1d24] border border-[#2a2d35] rounded-lg px-3 py-1.5 text-[#e8e3d5] font-mono text-xs outline-none focus:border-[#60a5fa] transition-colors"
+                />
+              </div>
+            </div>
+            {/* Quick presets */}
+            <div className="flex gap-1 flex-wrap">
+              {[
+                {
+                  label: "Today",
+                  from: () => {
+                    const d = new Date();
+                    return d.toISOString().slice(0, 10);
+                  },
+                  to: () => {
+                    const d = new Date();
+                    return d.toISOString().slice(0, 10);
+                  },
+                },
+                {
+                  label: "This week",
+                  from: () => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - d.getDay());
+                    return d.toISOString().slice(0, 10);
+                  },
+                  to: () => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + (6 - d.getDay()));
+                    return d.toISOString().slice(0, 10);
+                  },
+                },
+                {
+                  label: "This month",
+                  from: () => {
+                    const d = new Date();
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+                  },
+                  to: () => {
+                    const d = new Date();
+                    return new Date(d.getFullYear(), d.getMonth() + 1, 0)
+                      .toISOString()
+                      .slice(0, 10);
+                  },
+                },
+                {
+                  label: "Next 7d",
+                  from: () => new Date().toISOString().slice(0, 10),
+                  to: () => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + 7);
+                    return d.toISOString().slice(0, 10);
+                  },
+                },
+                {
+                  label: "Next 30d",
+                  from: () => new Date().toISOString().slice(0, 10),
+                  to: () => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + 30);
+                    return d.toISOString().slice(0, 10);
+                  },
+                },
+              ].map((preset) => (
+                <button
+                  key={preset.label}
+                  onClick={() => {
+                    setDateFrom(preset.from());
+                    setDateTo(preset.to());
+                  }}
+                  className="font-mono text-[9px] px-2 py-1 rounded-lg border border-[#2a2d35] bg-transparent text-[#4b5563] cursor-pointer hover:border-[#60a5fa] hover:text-[#60a5fa] transition-all tracking-wide"
+                >
+                  {preset.label}
+                </button>
+              ))}
+              {(dateFrom || dateTo) && (
+                <button
+                  onClick={() => {
+                    setDateFrom("");
+                    setDateTo("");
+                  }}
+                  className="font-mono text-[9px] px-2 py-1 rounded-lg border border-[#f8717133] bg-[#f8717118] text-[#f87171] cursor-pointer hover:opacity-80 transition-all tracking-wide"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {/* Result count */}
+            {(dateFrom || dateTo) && (
+              <span className="font-mono text-[10px] text-[#4b5563] shrink-0">
+                {visible.length} task{visible.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="bg-[#16181d] rounded-2xl overflow-hidden">
           <div className="hidden sm:flex gap-2.5 px-4 py-2.5 border-b border-[#1e2128]">
